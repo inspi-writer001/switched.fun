@@ -1,9 +1,9 @@
-import { currentUser } from "@clerk/nextjs";
+import { getUser } from "@civic/auth-web3/nextjs";
 
 import { db } from "@/lib/db";
 
 export const getSelf = async () => {
-  const self = await currentUser();
+  const self = await getUser();
 
   if (!self || !self.username) {
     throw new Error("Unauthorized");
@@ -21,7 +21,7 @@ export const getSelf = async () => {
 };
 
 export const getSelfByUsername = async (username: string) => {
-  const self = await currentUser();
+  const self = await getUser();
 
   if (!self || !self.username) {
     throw new Error("Unauthorized");

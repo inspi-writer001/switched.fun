@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { LogOut } from "lucide-react";
-import { UserButton } from "@clerk/nextjs";
+// import { UserButton } from "@clerk/nextjs";
 
 import { Button } from "@/components/ui/button";
 
@@ -18,9 +18,9 @@ export const Actions = () => {
           Exit
         </Link>
       </Button>
-      <UserButton
+      {/* <UserButton
         afterSignOutUrl="/"
-      />
+      /> */}
     </div>
   );
 };
