@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Navbar } from "./_components/navbar";
 import { Container } from "./_components/container";
 import { Sidebar, SidebarSkeleton } from "./_components/sidebar";
+import Landing from "./Landing/page"
 
 const BrowseLayout = ({
   children,
@@ -12,11 +13,15 @@ const BrowseLayout = ({
   return ( 
     <>
       <Navbar />
+      
       <div className="flex h-full pt-20">
+        
         <Suspense fallback={<SidebarSkeleton />}>
           <Sidebar />
         </Suspense>
+        
         <Container>
+          <Landing />
           {children}
         </Container>
       </div>
