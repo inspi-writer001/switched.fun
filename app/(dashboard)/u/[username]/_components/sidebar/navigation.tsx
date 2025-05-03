@@ -1,7 +1,7 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
-import { usePathname } from "next/navigation";
+import { useUser } from "@civic/auth-web3/react";
+import { useParams, usePathname } from "next/navigation";
 import { 
   Fullscreen,
   KeyRound,
@@ -13,27 +13,28 @@ import { NavItem, NavItemSkeleton } from "./nav-item";
 
 export const Navigation = () => {
   const pathname = usePathname();
+  const { username } = useParams<{ username: string; }>();
   const { user } = useUser();
 
   const routes = [
     {
       label: "Stream",
-      href: `/u/${user?.username}`,
+      href: `/u/${username}`,
       icon: Fullscreen,
     },
     {
       label: "Keys",
-      href: `/u/${user?.username}/keys`,
+      href: `/u/${username}/keys`,
       icon: KeyRound,
     },
     {
       label: "Chat",
-      href: `/u/${user?.username}/chat`,
+      href: `/u/${username}/chat`,
       icon: MessageSquare,
     },
     {
       label: "Community",
-      href: `/u/${user?.username}/community`,
+      href: `/u/${username}/community`,
       icon: Users,
     },
   ];

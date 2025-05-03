@@ -10,6 +10,8 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@civic/auth": "^0.5.2",
+    "@civic/auth-web3": "^0.5.5",
     "@clerk/nextjs": "^4.27.3",
     "@clerk/themes": "^1.7.9",
     "@livekit/components-react": "^1.4.2",
