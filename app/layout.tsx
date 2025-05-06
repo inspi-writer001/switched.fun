@@ -7,6 +7,7 @@ import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { CivicAuthProvider } from "@civic/auth-web3/nextjs";
+import CreateWallet from "@/components/civic/create-wallet";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,7 +30,10 @@ export default function RootLayout({
           storageKey="gamehub-theme"
         >
           <Toaster theme="light" position="bottom-center" />
-          <CivicAuthProvider>{children}</CivicAuthProvider>
+          <CivicAuthProvider>
+            {children}
+            <CreateWallet />
+          </CivicAuthProvider>
         </ThemeProvider>
       </body>
     </html>
