@@ -1,13 +1,16 @@
 // pages/api/auth/callback.ts
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { getUser } from '@civic/auth-web3/server';
-import { createAuthStorage } from '@civic/auth-web3/server/storage';
-import { authConfig } from '@civic/auth-web3/server/config';
+import type { NextApiRequest, NextApiResponse } from "next";
+import { getUser } from "@civic/auth-web3/server";
+import { createAuthStorage } from "@civic/auth-web3/server/storage";
+import { authConfig } from "@civic/auth-web3/server/config";
 
 // Mock database functions (replace with your actual database logic)
 const userDatabase: Record<string, { username?: string }> = {};
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   try {
     // Create authStorage instance
     const authStorage = createAuthStorage(req, res);
@@ -16,7 +19,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const user = await getUser({}, authStorage, authConfig);
 
     if (!user) {
-      return res.status(401).json({ error: 'Unauthorized: No user session found.' });
+      return res
+        .status(401)
+        .json({ error: "Unauthorized: No user session found." });
     }
 
     const userId = user.id;
@@ -35,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Prompt the user to set a username
       return res.status(200).json({
         success: true,
-        message: 'Username not found. Please set your username.',
+        message: "Username not found. Please set your username.",
         requiresUsername: true,
       });
     }
@@ -43,14 +48,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // User has a username; proceed with post-login actions
     return res.status(200).json({
       success: true,
-      message: 'Login successful.',
+      message: "Login successful.",
       user: {
         id: userId,
         username: existingUser.username,
       },
     });
   } catch (error) {
-    console.error('Error in /api/auth/callback:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Error in /api/auth/callback:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 }
