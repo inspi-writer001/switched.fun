@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import TipStats from "@/app/(dashboard)/u/[username]/profile/_components/TipStats";
 import DonationChart from "@/app/(dashboard)/u/[username]/profile/_components/DonationChart";
