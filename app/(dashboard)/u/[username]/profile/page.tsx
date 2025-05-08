@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import TipStats from "@/app/(dashboard)/u/[username]/profile/_components/TipStats";
 import DonationChart from "@/app/(dashboard)/u/[username]/profile/_components/DonationChart";
 import StreamStats from "@/app/(dashboard)/u/[username]/profile/_components/StreamStats";
@@ -8,9 +8,42 @@ import RecentTips from "@/app/(dashboard)/u/[username]/profile/_components/Recen
 import TokenBalance from "@/app/(dashboard)/u/[username]/profile/_components/TokenBalance";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChartPie, Users, DollarSign, Wallet, TrendingUp } from "lucide-react";
+import {
+  ChartPie,
+  Users,
+  DollarSign,
+  Wallet,
+  TrendingUp,
+  Copy,
+} from "lucide-react";
+import Modal from "react-modal";
+import QRCode from "react-qr-code";
+import { userHasWallet } from "@civic/auth-web3";
+import { useUser } from "@civic/auth-web3/react";
 
-const Dashboard = () => {
+const Profile = () => {
+  // 1️⃣ Fetch wallet from Civic Auth
+  const userContext = useUser(); /* :contentReference[oaicite:10]{index=10} */
+  const hasWallet =
+    userHasWallet(userContext); /* :contentReference[oaicite:11]{index=11} */
+  const address = hasWallet
+    ? userContext.solana.address
+    : ""; /* :contentReference[oaicite:12]{index=12} */
+
+  // 2️⃣ Modal state
+  const [isOpen, setIsOpen] = useState(false);
+
+  // 3️⃣ Bind react-modal to <body>
+  useEffect(() => {
+    Modal.setAppElement("body");
+  }, []); /* :contentReference[oaicite:13]{index=13} */
+
+  // 4️⃣ Build Solana Pay URI
+  const uri = address
+    ? `solana:${address}`
+    : ""; /* :contentReference[oaicite:14]{index=14} */
+
+  // 5️⃣ Period state for donation chart
   const [selectedPeriod, setSelectedPeriod] = useState<
     "day" | "week" | "month" | "year"
   >("month");
@@ -18,9 +51,106 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-display gradient-text mb-8">
-          Streaming Dashboard
-        </h1>
+        <div className="flex justify-between">
+          <h1 className="text-3xl font-display gradient-text mb-8">
+            Streaming Dashboard
+          </h1>
+          {/* Header with QR trigger */}
+          <div className="flex justify-between items-center mb-8">
+            <button
+              onClick={() => setIsOpen(true)}
+              disabled={!hasWallet}
+              className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md disabled:opacity-50"
+            >
+              <Wallet className="w-4 h-4 mr-2" />
+              Deposit
+            </button>
+          </div>
+
+          {/* Modal with QR code */}
+          <Modal
+            isOpen={isOpen}
+            onRequestClose={() => setIsOpen(false)}
+            contentLabel="Deposit to Wallet"
+            style={{
+              overlay: {
+                backgroundColor: "hsl(var(--background) / 0.9)",
+                backdropFilter: "blur(8px)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 1000,
+              },
+              content: {
+                position: "relative",
+                maxWidth: "440px",
+                margin: "0 20px",
+                padding: "32px",
+                borderRadius: "calc(var(--radius) + 4px)",
+                border: "1px solid hsl(var(--border))",
+                background: "hsl(var(--card))",
+                color: "hsl(var(--card-foreground))",
+                boxShadow: "0 12px 24px hsl(var(--background) / 0.25)",
+              },
+            }}
+          >
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl gradient-text mb-2">
+                  Deposit to Your Wallet
+                </h2>
+                <p className="text-muted-foreground text-sm">
+                  Scan the QR code or copy your wallet address
+                </p>
+              </div>
+
+              {hasWallet ? (
+                <>
+                  <div className="relative p-4 bg-card rounded-xl border border-border card-hover">
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10" />
+                    <QRCode
+                      value={uri}
+                      size={256}
+                      className="relative z-10 mx-auto"
+                      bgColor="hsl(var(--card))"
+                      fgColor="hsl(var(--card-foreground))"
+                    />
+                  </div>
+
+                  <div className="group relative">
+                    <a
+                      href={uri}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block p-3 pr-12 bg-muted rounded-lg text-sm hover:bg-accent/10 transition-colors truncate font-mono text-muted-foreground hover:text-foreground"
+                    >
+                      {address}
+                    </a>
+                    <button
+                      onClick={() =>
+                        navigator.clipboard.writeText(address || "")
+                      }
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="p-4 bg-destructive/10 rounded-lg border border-destructive text-destructive text-sm">
+                  Please connect your wallet first.
+                </div>
+              )}
+
+              <button
+                onClick={() => setIsOpen(false)}
+                className="w-full py-3 px-6 bg-gradient-to-r from-primary to-secondary rounded-lg text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+              >
+                Close
+              </button>
+            </div>
+          </Modal>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           {/* Token Balance Card */}
@@ -210,4 +340,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Profile;
