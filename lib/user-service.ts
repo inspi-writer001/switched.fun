@@ -1,9 +1,16 @@
-import { db } from "@/lib/db"
+import { db } from "@/lib/db";
 
+/**
+ * Fetch a user by username, matching case-insensitively.
+ * Throws if no user is found.
+ */
 export const getUserByUsername = async (username: string) => {
-  const user = await db.user.findUnique({
+  const user = await db.user.findFirst({
     where: {
-      username,
+      username: {
+        equals: username,
+        mode: "insensitive",
+      },
     },
     select: {
       id: true,
@@ -30,9 +37,17 @@ export const getUserByUsername = async (username: string) => {
     },
   });
 
+  if (!user) {
+    throw new Error("User not found");
+  }
+
   return user;
 };
 
+/**
+ * Fetch a user by ID.
+ * Throws if no user is found.
+ */
 export const getUserById = async (id: string) => {
   const user = await db.user.findUnique({
     where: { id },
@@ -40,6 +55,10 @@ export const getUserById = async (id: string) => {
       stream: true,
     },
   });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
 
   return user;
 };
