@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { CircleUserRound, LogOut } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
-// import { UserButton } from "@clerk/nextjs";
 
 import { Button } from "@/components/ui/button";
 

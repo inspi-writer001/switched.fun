@@ -1,5 +1,5 @@
 import { createCivicAuthPlugin } from '@civic/auth-web3/nextjs';
-
+ 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {

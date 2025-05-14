@@ -44,7 +44,7 @@ export const Navigation = () => {
   }
 
   // ⛔ Avoid rendering if user is still undefined
-  if (!user?.id) return null;
+  if (!user?.id) return null; 
 
   return (
     <ul className="space-y-2 px-2 pt-4 lg:pt-0">

@@ -2,13 +2,13 @@
 
 import { getUser } from "@civic/auth-web3/nextjs";
 import { db } from "@/lib/db";
-
+ 
 //
 // 1. STRICTLY AUTHENTICATED: throws if not logged in or wallet missing
 //
 export const getSelf = async () => {
   let self;
-  try {
+  try { 
     self = await getUser();
   } catch (err: any) {
     console.error("Civic Auth getUser failed:", err);
