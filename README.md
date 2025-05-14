@@ -1,6 +1,10 @@
 📺 Switched.fun — Livestreaming Meets Web3
 Switched.fun is a decentralized livestreaming platform that empowers creators to monetize their content through USDT tips and NFT rewards, all built on the Solana blockchain.
 
+demo video of civic auth implementation : https://www.loom.com/share/afa48d7063a14fc3b6ce8b74f4285650?sid=5aedf1a7-028a-42d9-9583-451b113461f6
+
+x post : https://x.com/TechWithGwin/status/1921309955279200645?t=etCpoA-8Yv5ElMwFlCX4qA&s=19
+
 ✨ Key Features
 🔐 Civic Auth Integration — Seamless wallet-based authentication with privacy-preserving identity verification.
 
