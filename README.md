@@ -1,53 +1,52 @@
-# Fullstack Twitch Clone: Next.js 14, Livestreaming, React, Prisma, Stripe, Tailwind, MySQL
+📺 Switched.fun — Livestreaming Meets Web3
+Switched.fun is a decentralized livestreaming platform that empowers creators to monetize their content through USDT tips and NFT rewards, all built on the Solana blockchain.
 
-![Twitch Clone Thumbnail (3)](https://github.com/AntonioErdeljac/next14-twitch-clone/assets/23248726/6e0153f1-ab30-4924-9f06-13d2f46ff3b5)
+✨ Key Features
+🔐 Civic Auth Integration — Seamless wallet-based authentication with privacy-preserving identity verification.
 
+🎥 Low-latency Livestreaming — Fast, reliable streaming experience tailored for creators and audiences.
 
+💸 Crypto Tipping — Viewers can support creators with USDT directly in-stream.
 
-This is a repository for Fullstack Trello Clone: Next.js 14, Livestreaming, React, Prisma, Stripe, Tailwind, MySQL
+🖼️ NFT Drops — Enable unique collectibles and community rewards during livestreams.
 
-[VIDEO TUTORIAL](https://www.youtube.com/watch?v=a02JAryRPVU)
+🌐 Built on Solana — Scalable, cost-efficient, and secure blockchain infrastructure.
 
-Key Features:
-- 📡 Streaming using RTMP / WHIP protocols 
+other Features:
+
+- 📡 Streaming using RTMP / WHIP protocols
 - 🌐 Generating ingress
-- 🔗 Connecting Next.js app to OBS / Your favorite streaming software 
-- 🔐 Authentication 
+- 🔗 Connecting Next.js app to OBS / Your favorite streaming software
+- 🔐 Authentication using civic auth
 - 📸 Thumbnail upload
-- 👀 Live viewer count 
-- 🚦 Live statuses 
-- 💬 Real-time chat using sockets 
-- 🎨 Unique color for each viewer in chat 
-- 👥 Following system 
-- 🚫 Blocking system 
-- 👢 Kicking participants from a stream in real-time 
-- 🎛️ Streamer / Creator Dashboard 
-- 🐢 Slow chat mode 
-- 🔒 Followers only chat mode 
-- 📴 Enable / Disable chat 
-- 🔽 Collapsible layout (hide sidebars, chat etc, theatre mode etc.) 
-- 📚 Sidebar following & recommendations tab 
-- 🏠 Home page recommending streams, sorted by live first 
-- 🔍 Search results page with a different layout 
-- 🔄 Syncing user information to our DB using Webhooks 
-- 📡 Syncing live status information to our DB using Webhooks 
-- 🤝 Community tab 
+- 👀 Live viewer count
+- 🚦 Live statuses
+- 💬 Real-time chat using sockets
+- 🎨 Unique color for each viewer in chat
+- 👥 Following system
+- 🚫 Blocking system
+- 👢 Kicking participants from a stream in real-time
+- 🎛️ Streamer / Creator Dashboard
+- 🐢 Slow chat mode
+- 🔒 Followers only chat mode
+- 📴 Enable / Disable chat
+- 🔽 Collapsible layout (hide sidebars, chat etc, theatre mode etc.)
+- 📚 Sidebar following & recommendations tab
+- 🏠 Home page recommending streams, sorted by live first
+- 🔍 Search results page with a different layout
+- 🔄 Syncing user information to our DB using Webhooks
+- 📡 Syncing live status information to our DB using Webhooks
+- 🤝 Community tab
 - 🎨 Beautiful design
-- ⚡ Blazing fast application 
-- 📄 SSR (Server-Side Rendering) 
-- 🗺️ Grouped routes & layouts 
+- ⚡ Blazing fast application
+- 📄 SSR (Server-Side Rendering)
+- 🗺️ Grouped routes & layouts
 - 🗃️ MySQL
 - 🚀 Deployment
 
 ### Prerequisites
 
 **Node version 18.17 or later**
-
-### Cloning the repository
-
-```shell
-git clone https://github.com/AntonioErdeljac/next14-twitch-clone.git
-```
 
 ### Install packages
 
@@ -57,15 +56,12 @@ npm i
 
 ### Setup .env file
 
-
 ```js
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
-CLERK_WEBHOOK_SECRET=
+NEXT_PUBLIC_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_AFTER_SIGN_IN_URL=/
+NEXT_PUBLIC_AFTER_SIGN_UP_URL=/
+
 
 DATABASE_URL=
 
@@ -77,6 +73,10 @@ NEXT_PUBLIC_LIVEKIT_WS_URL=
 UPLOADTHING_SECRET=
 UPLOADTHING_APP_ID=
 ```
+
+<!-- civic auth -->
+
+NEXT_PUBLIC_CIVIC_CLIENT_ID=
 
 ### Setup Prisma
 
@@ -98,6 +98,6 @@ npm run dev
 
 Running commands with npm `npm run [command]`
 
-| command         | description                              |
-| :-------------- | :--------------------------------------- |
-| `dev`           | Starts a development instance of the app |
+| command | description                              |
+| :------ | :--------------------------------------- |
+| `dev`   | Starts a development instance of the app |

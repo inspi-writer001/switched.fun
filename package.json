@@ -1,5 +1,5 @@
 {
-  "name": "video-twitch",
+  "name": "switched.fun",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,8 +12,6 @@
   "dependencies": {
     "@civic/auth": "^0.5.2",
     "@civic/auth-web3": "^0.5.5",
-    "@clerk/nextjs": "^4.27.3",
-    "@clerk/themes": "^1.7.9",
     "@livekit/components-react": "^1.4.2",
     "@prisma/client": "^5.6.0",
     "@radix-ui/react-avatar": "^1.0.4",
