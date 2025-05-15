@@ -62,6 +62,6 @@ pub struct TransferWithFee<'info> {
     #[account(mut)]
     pub fee_token: Account<'info, TokenAccount>,
 
-    /// The SPL Token program
+
     pub token_program: Program<'info, Token>,
 }

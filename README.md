@@ -82,6 +82,10 @@ UPLOADTHING_APP_ID=
 
 NEXT_PUBLIC_CIVIC_CLIENT_ID=
 
+# Set to "true" to use Mainnet‑Beta; otherwise we'll default to Devnet
+
+NEXT_PUBLIC_USE_MAINNET=FALSE
+
 ### Setup Prisma
 
 Add MySQL Database (I used PlanetScale)
