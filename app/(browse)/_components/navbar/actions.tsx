@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { createUser, getSelfById, updateUser } from "@/actions/user";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { getSelf } from "@/lib/auth-service";
 
 export const Actions = () => {
   const [loading, setLoading] = useState(false);
@@ -17,6 +18,35 @@ export const Actions = () => {
   const [username, setUsername] = useState("");
   const { signIn, user } = useUser();
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // 1️⃣ When Civic Auth user becomes available, fetch/create your DB user
+  useEffect(() => {
+    if (!user) return;
+
+    const check = async () => {
+      try {
+        // getSelf looks up by externalUserId (Civic user.id)
+        const me = await getSelf();
+        setCurrentUser(me);
+
+        // if they haven’t chosen a username yet, open modal
+        if (!me.username) {
+          setOpenUsernameModal(true);
+        }
+      } catch (err: any) {
+        if (err.message === "User not found") {
+          // first‑time sign‑up → open modal
+          setOpenUsernameModal(true);
+        } else {
+          console.error("Error checking user:", err);
+        }
+      }
+    };
+
+    check();
+  }, [user]);
+
+  // 2️⃣ Login via Civic Auth
 
   async function handleLogin() {
     setLoading(true);

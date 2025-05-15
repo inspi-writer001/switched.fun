@@ -1,0 +1,8 @@
+[package]
+name = "fee_program"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anchor-lang = "0.32.0"
+anchor-spl = "0.32.0"

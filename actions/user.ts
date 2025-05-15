@@ -6,16 +6,26 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { getSelf } from "@/lib/auth-service";
 
-export const updateUser = async (values: Partial<User>) => {
+export const updateUser = async (values: {
+  id?: string;
+  username?: string;
+  bio?: string;
+}) => {
+  // re‑fetch the authenticated user
   const self = await getSelf();
 
-  const validData = {
-    bio: values.bio,
-  };
+  // Build only the fields you actually need to update
+  const data: Partial<User> = {};
+  if (values.username) {
+    data.username = values.username.toLowerCase();
+  }
+  if (values.bio) {
+    data.bio = values.bio;
+  }
 
   const user = await db.user.update({
     where: { id: self.id },
-    data: { ...validData }
+    data,
   });
 
   revalidatePath(`/${self.username}`);
@@ -23,7 +33,6 @@ export const updateUser = async (values: Partial<User>) => {
 
   return user;
 };
-
 
 export const createUser = async (data: {
   externalUserId: string;
@@ -38,21 +47,21 @@ export const createUser = async (data: {
         imageUrl: data.username,
         stream: {
           create: {
-            name: `${data.username.toLocaleLowerCase() || 'User'}'s stream`,
+            name: `${data.username.toLocaleLowerCase() || "User"}'s stream`,
           },
         },
       },
     });
-  
-    return user
+
+    return user;
   } catch (e) {
     throw new Error("Something went wrong!");
   }
-}
+};
 
 export const getSelfById = async (id: string) => {
   const user = await db.user.findUnique({
-    where: { externalUserId: id }
+    where: { externalUserId: id },
   });
 
   if (!user) {
@@ -60,4 +69,4 @@ export const getSelfById = async (id: string) => {
   }
 
   return user;
-}
+};
