@@ -2,13 +2,20 @@
 
 import { getUser } from "@civic/auth-web3/nextjs";
 import { db } from "@/lib/db";
- 
+import { cookies } from "next/headers";
 //
 // 1. STRICTLY AUTHENTICATED: throws if not logged in or wallet missing
 //
 export const getSelf = async () => {
+  const cookieStore = cookies(); // ❗ Only safe to use in server functions
+  const token = cookieStore.get("authToken")?.value;
+
+  if (!token) {
+    throw new Error("No authentication cookie found");
+  }
+
   let self;
-  try { 
+  try {
     self = await getUser();
   } catch (err: any) {
     console.error("Civic Auth getUser failed:", err);

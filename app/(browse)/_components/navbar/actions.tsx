@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Clapperboard, Loader2 } from "lucide-react";
-
 import { UserButton, useUser } from "@civic/auth-web3/react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
@@ -10,90 +9,76 @@ import { createUser, getSelfById, updateUser } from "@/actions/user";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { getSelf } from "@/lib/auth-service";
+import { checkOrCreateUser } from "@/actions/checkUser";
 
 export const Actions = () => {
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false); // for sign‑in button
+  const [submitting, setSubmitting] = useState(false); // for username form
   const [openUsernameModal, setOpenUsernameModal] = useState(false);
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(""); // input state
   const { signIn, user } = useUser();
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null); // your DB user
 
-  // 1️⃣ When Civic Auth user becomes available, fetch/create your DB user
+  // 👉 1️⃣ When Civic Auth user becomes available (sign‑in/sign‑up), run our check ONCE
   useEffect(() => {
     if (!user) return;
+    console.log("Calling server action checkOrCreateUser…");
 
-    const check = async () => {
+    const run = async () => {
       try {
-        // getSelf looks up by externalUserId (Civic user.id)
-        const me = await getSelf();
+        const { user: me, needsUsername } = await checkOrCreateUser();
         setCurrentUser(me);
 
-        // if they haven’t chosen a username yet, open modal
-        if (!me.username) {
+        if (needsUsername) {
           setOpenUsernameModal(true);
         }
-      } catch (err: any) {
-        if (err.message === "User not found") {
-          // first‑time sign‑up → open modal
-          setOpenUsernameModal(true);
-        } else {
-          console.error("Error checking user:", err);
-        }
+      } catch (err) {
+        console.error("Error during user check:", err);
       }
     };
 
-    check();
+    run();
   }, [user]);
 
-  // 2️⃣ Login via Civic Auth
-
+  // 👉 2️⃣ Handle the “Login” button
   async function handleLogin() {
+    console.log("[Actions] handleLogin() called");
     setLoading(true);
     try {
       await signIn("iframe");
-      // signIn will set `user`, which triggers your useEffect below
+      console.log("[Actions] signIn() resolved; Civic user should now be set");
     } catch (e) {
-      console.error("Login failed", e);
+      console.error("[Actions] Login failed:", e);
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleUserCheck(user: any) {
-    try {
-      const me = await getSelfById(user.id);
-      setCurrentUser(me);
-      if (!me?.username) setOpenUsernameModal(true);
-    } catch (e: any) {
-      if (e.message === "User not found") {
-        setOpenUsernameModal(true);
-      }
-    }
-  }
-
-  async function handleOnSubmit(e: any) {
+  // 👉 3️⃣ Handle submitting the username form
+  async function handleOnSubmit(e: React.FormEvent) {
     e.preventDefault();
+    console.log("[Actions] Username form submitted:", username);
     setSubmitting(true);
     try {
       if (currentUser) {
+        console.log("[Actions] Updating existing user:", currentUser.id);
         await updateUser({ id: currentUser.id, username });
       } else {
+        console.log("[Actions] Creating new user for Civic ID:", user!.id);
         await createUser({
           externalUserId: user!.id,
           username,
           imageUrl: user!.picture!,
         });
       }
+    } catch (err) {
+      console.error("[Actions] Error in create/update user:", err);
     } finally {
       setSubmitting(false);
+      console.log("[Actions] Closing username modal");
       setOpenUsernameModal(false);
     }
   }
-
-  useEffect(() => {
-    if (user) handleUserCheck(user);
-  }, [user]);
 
   return (
     <div className="flex items-center justify-end gap-x-2 ml-4 lg:ml-0">
@@ -140,7 +125,13 @@ export const Actions = () => {
               className="w-full"
               type="text"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => {
+                console.log(
+                  "[Actions] Username input changed:",
+                  e.target.value
+                );
+                setUsername(e.target.value);
+              }}
               placeholder="Choose a username…"
             />
             <Button type="submit" disabled={submitting}>
