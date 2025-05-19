@@ -1,39 +1,12 @@
 "use server";
 
-import { User } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-
 import { db } from "@/lib/db";
 import { getSelf } from "@/lib/auth-service";
 
-export const updateUser = async (values: {
-  id?: string;
-  username?: string;
-  bio?: string;
-}) => {
-  // re‑fetch the authenticated user
-  const self = await getSelf();
-
-  // Build only the fields you actually need to update
-  const data: Partial<User> = {};
-  if (values.username) {
-    data.username = values.username.toLowerCase();
-  }
-  if (values.bio) {
-    data.bio = values.bio;
-  }
-
-  const user = await db.user.update({
-    where: { id: self.id },
-    data,
-  });
-
-  revalidatePath(`/${self.username}`);
-  revalidatePath(`/u/${self.username}`);
-
-  return user;
-};
-
+// ————————————————
+// Create a brand‑new user
+// ————————————————
 export const createUser = async (data: {
   externalUserId: string;
   username: string;
@@ -44,29 +17,68 @@ export const createUser = async (data: {
       data: {
         externalUserId: data.externalUserId,
         username: data.username.toLowerCase(),
-        imageUrl: data.username,
+        // FIXED: was mistakenly `data.username`
+        imageUrl: data.imageUrl,
         stream: {
           create: {
-            name: `${data.username.toLocaleLowerCase() || "User"}'s stream`,
+            name: `${data.username.toLowerCase() || "user"}'s stream`,
           },
         },
       },
     });
 
+    // re‑cache your profile pages so the new user is immediately visible
+    revalidatePath(`/u/${user.username}`);
+    revalidatePath(`/@${user.username}`);
+
     return user;
-  } catch (e) {
-    throw new Error("Something went wrong!");
+  } catch (err: any) {
+    console.error("[createUser] DB error:", err);
+    // rethrow the original message so you can see the real cause in the client
+    throw new Error(err.message || "Create user failed");
   }
 };
 
-export const getSelfById = async (id: string) => {
-  const user = await db.user.findUnique({
-    where: { externalUserId: id },
-  });
+// ————————————————
+// Update an existing user’s username
+// ————————————————
+export const updateUser = async (values: { id: string; username: string }) => {
+  try {
+    // re‑validate auth & get the currently logged‑in user
+    const self = await getSelf();
 
-  if (!user) {
-    throw new Error("User not found");
+    const updated = await db.user.update({
+      where: { id: self.id },
+      data: { username: values.username.toLowerCase() },
+    });
+
+    // re‑cache the old and new username paths
+    revalidatePath(`/u/${self.username}`);
+    revalidatePath(`/u/${updated.username}`);
+    revalidatePath(`/@${self.username}`);
+    revalidatePath(`/@${updated.username}`);
+
+    return updated;
+  } catch (err: any) {
+    console.error("[updateUser] error:", err);
+    throw new Error(err.message || "Update user failed");
   }
+};
 
-  return user;
+// ————————————————
+// Fetch the DB user by their external (Civic) ID
+// ————————————————
+export const getSelfById = async (externalUserId: string) => {
+  try {
+    const user = await db.user.findUnique({
+      where: { externalUserId },
+    });
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user;
+  } catch (err: any) {
+    console.error("[getSelfById] error:", err);
+    throw new Error(err.message || "Fetch user by ID failed");
+  }
 };
