@@ -1,44 +1,48 @@
 "use client";
 
 import { toast } from "sonner";
-import { useState, useTransition, useRef, ElementRef } from "react";
+import { useState, useTransition, useRef } from "react";
 
 import {
   Dialog,
-  DialogClose,
+  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { updateUser } from "@/actions/user";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 interface BioModalProps {
-  initialValue: string | null;
-};
+  initialValue?: string;
+}
 
-export const BioModal = ({
-  initialValue,
-}: BioModalProps) => {
-  const closeRef = useRef<ElementRef<"button">>(null);
-
+export const BioModal: React.FC<BioModalProps> = ({ initialValue = "" }) => {
+  // 1️⃣ Use HTMLButtonElement for the ref
+  const closeRef = useRef<HTMLButtonElement>(null);
   const [isPending, startTransition] = useTransition();
-  const [value, setValue] = useState(initialValue || "");
+  const [value, setValue] = useState(initialValue);
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    startTransition(() => {
-      updateUser({ bio: value })
-        .then(() => {
-          toast.success("User bio updated");
-          closeRef.current?.click();
-        })
-        .catch(() => toast.error("Something went wrong"));
+    // 2️⃣ Wrap your async server action in an async transition callback
+    startTransition(async () => {
+      try {
+        await updateUser({
+          bio: value,
+          id: "",
+        });
+        toast.success("User bio updated");
+        // 3️⃣ Click the “Cancel” button to close the dialog
+        closeRef.current?.click();
+      } catch {
+        toast.error("Something went wrong");
+      }
     });
-  }
+  };
 
   return (
     <Dialog>
@@ -47,30 +51,34 @@ export const BioModal = ({
           Edit
         </Button>
       </DialogTrigger>
+
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit user bio</DialogTitle>
         </DialogHeader>
+
         <form onSubmit={onSubmit} className="space-y-4">
           <Textarea
             placeholder="User bio"
-            onChange={(e) => setValue(e.target.value)}
             value={value}
+            onChange={(e) => setValue(e.target.value)}
             disabled={isPending}
             className="resize-none"
           />
+
           <div className="flex justify-between">
-            <DialogClose ref={closeRef} asChild>
-              <Button type="button" variant="ghost">
+            {/* 
+              4️⃣ Move the ref onto the actual <button>, 
+              not onto DialogClose itself 
+            */}
+            <DialogClose asChild>
+              <Button type="button" variant="ghost" ref={closeRef}>
                 Cancel
               </Button>
             </DialogClose>
-            <Button
-              disabled={isPending}
-              type="submit"
-              variant="primary"
-            >
-              Save
+
+            <Button type="submit" variant="primary" disabled={isPending}>
+              {isPending ? "Saving…" : "Save"}
             </Button>
           </div>
         </form>
