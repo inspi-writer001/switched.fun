@@ -43,6 +43,8 @@ export const createUser = async (data: {
 // Update an existing user’s username or bio
 // ————————————————
 export const updateUser = async (values: {
+  id: string;
+  // externalUserId?: string;
   username?: string;
   bio?: string;
 }) => {
