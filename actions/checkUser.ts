@@ -2,15 +2,17 @@
 "use server";
 
 import { getSelf } from "@/lib/auth-service";
+import { getUserById } from "@/lib/user-service";
 
 export type CheckUserResult = {
   user: { id: string; username?: string } | null;
   needsUsername: boolean;
 };
 
-export async function checkOrCreateUser(): Promise<CheckUserResult> {
+export async function checkOrCreateUser(id: string): Promise<CheckUserResult> {
   try {
-    const me = await getSelf();
+    const me = await getUserById(id);
+
     return {
       user: { id: me.id, username: me.username },
       needsUsername: !me.username,

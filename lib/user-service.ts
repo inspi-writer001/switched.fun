@@ -50,7 +50,7 @@ export const getUserByUsername = async (username: string) => {
  */
 export const getUserById = async (id: string) => {
   const user = await db.user.findUnique({
-    where: { id },
+    where: { externalUserId: id },
     include: {
       stream: true,
     },

@@ -19,14 +19,14 @@ export const Actions = () => {
   const { signIn, user } = useUser();
   const [currentUser, setCurrentUser] = useState<any>(null); // your DB user
 
-  // 👉 1️⃣ When Civic Auth user becomes available (sign‑in/sign‑up), run our check ONCE
+  // // 👉 1️⃣ When Civic Auth user becomes available (sign‑in/sign‑up), run our check ONCE
   useEffect(() => {
     if (!user) return;
-    console.log("Calling server action checkOrCreateUser…");
 
     const run = async () => {
       try {
-        const { user: me, needsUsername } = await checkOrCreateUser();
+        const { user: me, needsUsername } = await checkOrCreateUser(user.id);
+        console.log("username", me);
         setCurrentUser(me);
 
         if (needsUsername) {
@@ -42,13 +42,10 @@ export const Actions = () => {
 
   // 👉 2️⃣ Handle the “Login” button
   async function handleLogin() {
-    console.log("[Actions] handleLogin() called");
     setLoading(true);
     try {
       await signIn("iframe");
-      console.log("[Actions] signIn() resolved; Civic user should now be set");
     } catch (e) {
-      console.error("[Actions] Login failed:", e);
     } finally {
       setLoading(false);
     }
@@ -57,14 +54,11 @@ export const Actions = () => {
   // 👉 3️⃣ Handle submitting the username form
   async function handleOnSubmit(e: React.FormEvent) {
     e.preventDefault();
-    console.log("[Actions] Username form submitted:", username);
     setSubmitting(true);
     try {
       if (currentUser) {
-        console.log("[Actions] Updating existing user:", currentUser.id);
         await updateUser({ id: currentUser.id, username });
       } else {
-        console.log("[Actions] Creating new user for Civic ID:", user!.id);
         await createUser({
           externalUserId: user!.id,
           username,
@@ -72,10 +66,8 @@ export const Actions = () => {
         });
       }
     } catch (err) {
-      console.error("[Actions] Error in create/update user:", err);
     } finally {
       setSubmitting(false);
-      console.log("[Actions] Closing username modal");
       setOpenUsernameModal(false);
     }
   }
