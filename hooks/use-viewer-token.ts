@@ -5,7 +5,7 @@ import { JwtPayload, jwtDecode } from "jwt-decode";
 import { createViewerToken } from "@/actions/token";
 
 export const useViewerToken = (hostIdentity: string) => {
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState("");  
   const [name, setName] = useState("");
   const [identity, setIdentity] = useState("");
 

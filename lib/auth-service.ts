@@ -1,41 +1,86 @@
-import { currentUser } from "@clerk/nextjs";
+// lib/auth-service.ts
 
+import { getUser } from "@civic/auth-web3/nextjs";
 import { db } from "@/lib/db";
-
+import { cookies } from "next/headers";
+//
+// 1. STRICTLY AUTHENTICATED: throws if not logged in or wallet missing
+//
 export const getSelf = async () => {
-  const self = await currentUser();
+  const cookieStore = cookies(); // ❗ Only safe to use in server functions
+  const token = cookieStore.get("authToken")?.value;
 
-  if (!self || !self.username) {
-    throw new Error("Unauthorized");
+  if (!token) {
+    throw new Error("No authentication cookie found");
   }
 
+  let self;
+  try {
+    self = await getUser();
+  } catch (err: any) {
+    console.error("Civic Auth getUser failed:", err);
+    throw new Error("Authentication failed");
+  }
+  if (!self?.id) {
+    throw new Error("Unauthorized");
+  }
   const user = await db.user.findUnique({
     where: { externalUserId: self.id },
   });
-
   if (!user) {
-    throw new Error("Not found");
+    throw new Error("User not found");
   }
-
   return user;
 };
 
-export const getSelfByUsername = async (username: string) => {
-  const self = await currentUser();
-
-  if (!self || !self.username) {
-    throw new Error("Unauthorized");
-  }
-
-  const user = await db.user.findUnique({
-    where: { username }
+//
+// 2. PUBLIC PROFILE LOOKUP: case‑insensitive, safe for any visitor
+//
+export const getPublicUserByUsername = async (username: string) => {
+  const user = await db.user.findFirst({
+    where: {
+      username: {
+        equals: username,
+        mode: "insensitive",
+      },
+    },
   });
+  if (!user) {
+    throw new Error("User not found");
+  }
+  return user;
+};
 
+//
+// 3. OWNER‑ONLY PROFILE: case‑insensitive + strict Civic auth match
+//
+export const getSelfByUsername = async (username: string) => {
+  // 1) Fetch by username, ignoring case
+  const user = await db.user.findFirst({
+    where: {
+      username: {
+        equals: username,
+        mode: "insensitive",
+      },
+    },
+    include: { stream: true },
+  });
   if (!user) {
     throw new Error("User not found");
   }
 
-  if (self.username !== user.username) {
+  // 2) Verify Civic auth
+  let self;
+  try {
+    self = await getUser();
+  } catch (err: any) {
+    console.error("Civic Auth getUser failed:", err);
+    throw new Error("Authentication failed");
+  }
+  if (!self?.id) {
+    throw new Error("Unauthorized");
+  }
+  if (self.id !== user.externalUserId) {
     throw new Error("Unauthorized");
   }
 
