@@ -2,17 +2,17 @@
 
 import { getUser } from "@civic/auth-web3/nextjs";
 import { db } from "@/lib/db";
-import { cookies } from "next/headers";
+// import { cookies } from "next/headers";
 //
 // 1. STRICTLY AUTHENTICATED: throws if not logged in or wallet missing
 //
 export const getSelf = async () => {
-  const cookieStore = cookies(); // ❗ Only safe to use in server functions
-  const token = cookieStore.get("authToken")?.value;
+  // const cookieStore = cookies(); // ❗ Only safe to use in server functions
+  // const token = cookieStore.get("authToken")?.value;
 
-  if (!token) {
-    throw new Error("No authentication cookie found");
-  }
+  // if (!token) {
+  //   throw new Error("No authentication cookie found");
+  // }
 
   let self;
   try {

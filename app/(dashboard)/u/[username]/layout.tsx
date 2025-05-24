@@ -12,26 +12,28 @@ interface CreatorLayoutProps {
 }
 
 const CreatorLayout = async ({ params, children }: CreatorLayoutProps) => {
-  try {
-    // const self = await getSelfByUsername(params.username);
+  // try {
+  //   // const self = await getSelfByUsername(params.username);
 
-    // if (!self) {
-    //   redirect("/");
-    // }
+  //   // if (!self) {
+  //   //   redirect("/");
+  //   // }
 
-    return (
-      <>
-        <Navbar />
-        <div className="flex h-full pt-20">
-          <Sidebar />
-          <Container>{children}</Container>
-        </div>
-      </>
-    );
-  } catch (error) {
-    console.error("Layout Error:", error);
-    redirect("/");
-  }
+    
+  // } catch (error) {
+  //   console.error("Layout Error:", error);
+  //   redirect("/");
+  // }
+
+  return (
+    <>
+      <Navbar />
+      <div className="flex h-full pt-20">
+        <Sidebar />
+        <Container>{children}</Container>
+      </div>
+    </>
+  );
 };
 
 export default CreatorLayout;

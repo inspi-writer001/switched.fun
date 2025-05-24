@@ -5,43 +5,47 @@ import { db } from "@/lib/db";
  * Throws if no user is found.
  */
 export const getUserByUsername = async (username: string) => {
-  const user = await db.user.findFirst({
-    where: {
-      username: {
-        equals: username,
-        mode: "insensitive",
-      },
-    },
-    select: {
-      id: true,
-      externalUserId: true,
-      username: true,
-      bio: true,
-      imageUrl: true,
-      stream: {
-        select: {
-          id: true,
-          isLive: true,
-          isChatDelayed: true,
-          isChatEnabled: true,
-          isChatFollowersOnly: true,
-          thumbnailUrl: true,
-          name: true,
+  try {
+    const user = await db.user.findFirst({
+      where: {
+        username: {
+          equals: username,
+          mode: "insensitive",
         },
       },
-      _count: {
-        select: {
-          followedBy: true,
+      select: {
+        id: true,
+        externalUserId: true,
+        username: true,
+        bio: true,
+        imageUrl: true,
+        stream: {
+          select: {
+            id: true,
+            isLive: true,
+            isChatDelayed: true,
+            isChatEnabled: true,
+            isChatFollowersOnly: true,
+            thumbnailUrl: true,
+            name: true,
+          },
+        },
+        _count: {
+          select: {
+            followedBy: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  if (!user) {
-    throw new Error("User not found");
+    if (!user) {
+      console.error("User not found");
+    }
+
+    return user;
+  } catch (error) {
+    console.error("getUserByUsername Error:", error);
   }
-
-  return user;
 };
 
 /**
@@ -49,8 +53,10 @@ export const getUserByUsername = async (username: string) => {
  * Throws if no user is found.
  */
 export const getUserById = async (id: string) => {
-  const user = await db.user.findUnique({
-    where: { externalUserId: id },
+  const user = await db.user.findFirst({
+    where: {
+      OR: [{ externalUserId: id }, { id: id }],
+    },
     include: {
       stream: true,
     },

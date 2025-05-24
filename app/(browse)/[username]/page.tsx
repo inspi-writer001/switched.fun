@@ -16,10 +16,10 @@ const UserPage = async ({
 }: UserPageProps) => {
   const user = await getUserByUsername(params.username);
 
-  if (!user || !user.stream) {
+  if (!user || !user?.stream) {
     notFound();
   }
-
+  
   const isFollowing = await isFollowingUser(user.id);
   const isBlocked = await isBlockedByUser(user.id);
 
