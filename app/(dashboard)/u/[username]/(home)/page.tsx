@@ -15,8 +15,6 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
   const raw = params.username;
 
   const username = raw.toLowerCase();
-  console.log("raw", raw);
-  console.log("username", username);
 
   if (raw !== username) {
     redirect(`/u/${username}`);
@@ -26,7 +24,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
 
   const user = await getUserByUsername(username);
 
-  if (user.externalUserId !== externalUser?.id || !user.stream) {
+  if (user?.externalUserId !== externalUser?.id || !user?.stream) {
     redirect("/");
   }
 
