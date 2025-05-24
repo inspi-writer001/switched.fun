@@ -21,7 +21,6 @@ const BrowseLayout = ({
         </Suspense>
         
         <Container>
-          <Landing />
           {children}
         </Container>
       </div>

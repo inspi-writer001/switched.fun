@@ -7,6 +7,7 @@ import { ConnectModal } from "./_components/connect-modal";
 
 const KeysPage = async () => {
   const self = await getSelf();
+  console.log("self user", self)
   const stream = await getStreamByUserId(self.id);
 
   console.log("stream", stream);

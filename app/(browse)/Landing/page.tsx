@@ -5,12 +5,17 @@ import { ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ImageCarousel from "./_components/ImageCarousel";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const VideoHero = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [showCarousel, setShowCarousel] = useState(false);
+
+  const pathname = usePathname();
+
+  if(pathname !== "/") return null;
 
   const carouselImages = [
     {
