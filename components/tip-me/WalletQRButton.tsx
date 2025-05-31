@@ -6,6 +6,7 @@ import QRCode from "react-qr-code";
 import { userHasWallet } from "@civic/auth-web3";
 import { useUser } from "@civic/auth-web3/react";
 import { Copy, Wallet } from "lucide-react";
+import { toast } from "sonner"; // Import Sonner toast
 
 interface WalletQRButtonProps {
   tokenMint?: string;
@@ -19,12 +20,44 @@ export const WalletQRButton: React.FC<WalletQRButtonProps> = ({
   const hasWallet = userHasWallet(userContext);
   const address = hasWallet ? userContext.solana.address : "";
   const uri = address
-    ? `solana:${address}${tokenMint ? `?spl-token=${tokenMint}` : ""}`
+    ? `${address}${tokenMint ? `?spl-token=${tokenMint}` : ""}`
     : "";
 
   useEffect(() => {
     Modal.setAppElement("body");
   }, []);
+
+  const handleCopy = () => {
+    navigator.clipboard
+      .writeText(uri)
+      .then(() => {
+        toast.success("Wallet address copied to clipboard!", {
+          position: "top-center",
+          duration: 2000,
+          style: {
+            background: "hsl(var(--background))",
+            color: "hsl(var(--foreground))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: "calc(var(--radius) - 2px)",
+            padding: "8px 16px",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+          },
+        });
+      })
+      .catch((err) => {
+        toast.error("Failed to copy address", {
+          position: "top-center",
+          duration: 2000,
+          style: {
+            background: "hsl(var(--destructive))",
+            color: "hsl(var(--destructive-foreground))",
+            border: "1px solid hsl(var(--destructive))",
+            borderRadius: "calc(var(--radius) - 2px)",
+            padding: "8px 16px",
+          },
+        });
+      });
+  };
 
   return (
     <>
@@ -33,8 +66,7 @@ export const WalletQRButton: React.FC<WalletQRButtonProps> = ({
         disabled={!hasWallet}
         className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <Wallet className="w-4 h-4 mr-2" />
-        Wallet QR Code
+        💰 Tip Me
       </button>
 
       <Modal
@@ -89,7 +121,7 @@ export const WalletQRButton: React.FC<WalletQRButtonProps> = ({
                   {uri}
                 </div>
                 <button
-                  onClick={() => navigator.clipboard.writeText(uri)}
+                  onClick={handleCopy}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   <Copy className="w-4 h-4" />

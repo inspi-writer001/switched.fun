@@ -20,6 +20,8 @@ import Modal from "react-modal";
 import QRCode from "react-qr-code";
 import { userHasWallet } from "@civic/auth-web3";
 import { useUser } from "@civic/auth-web3/react";
+import TopDonors from "./_components/TopDonors";
+import { toast } from "sonner"; // Import Sonner toast
 
 const Profile = () => {
   // 1️⃣ Fetch wallet from Civic Auth
@@ -47,6 +49,41 @@ const Profile = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<
     "day" | "week" | "month" | "year"
   >("month");
+
+  // Function to handle copy with toast notification
+  const handleCopyAddress = () => {
+    if (!address) return;
+
+    navigator.clipboard
+      .writeText(address)
+      .then(() => {
+        toast.success("Wallet address copied to clipboard!", {
+          position: "top-center",
+          duration: 2000,
+          style: {
+            background: "hsl(var(--background))",
+            color: "hsl(var(--foreground))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: "calc(var(--radius) - 2px)",
+            padding: "8px 16px",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+          },
+        });
+      })
+      .catch((err) => {
+        toast.error("Failed to copy address", {
+          position: "top-center",
+          duration: 2000,
+          style: {
+            background: "hsl(var(--destructive))",
+            color: "hsl(var(--destructive-foreground))",
+            border: "1px solid hsl(var(--destructive))",
+            borderRadius: "calc(var(--radius) - 2px)",
+            padding: "8px 16px",
+          },
+        });
+      });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -127,9 +164,7 @@ const Profile = () => {
                       {address}
                     </a>
                     <button
-                      onClick={() =>
-                        navigator.clipboard.writeText(address || "")
-                      }
+                      onClick={handleCopyAddress} // Updated to use the new handler
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
                       <Copy className="w-4 h-4" />
@@ -202,40 +237,13 @@ const Profile = () => {
                   ))}
                 </div>
               </div>
+
+              {/* <-- Swap in DonationChart here (with period) --> */}
               <DonationChart period={selectedPeriod} />
             </Card>
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <RecentTips />
-
-              <Card className="p-4">
-                <h2 className="text-xl font-semibold mb-4">Top Donors</h2>
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="flex justify-between items-center">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center text-white font-semibold">
-                          {i + 1}
-                        </div>
-                        <div>
-                          <p className="font-medium">User{i + 1}</p>
-                          <p className="text-sm text-muted-foreground">
-                            sol...{i}xyz
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">
-                          ${(100 - i * 15).toFixed(2)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {10 - i} donations
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
+              <TopDonors />
             </div>
           </TabsContent>
 

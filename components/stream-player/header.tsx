@@ -70,6 +70,7 @@ export const Header = ({
           )}
         </div>
       </div>
+      <WalletQRButton />
       <Actions
         isFollowing={isFollowing}
         hostIdentity={hostIdentity}
@@ -89,7 +90,7 @@ export const HeaderSkeleton = () => {
           <Skeleton className="h-4 w-24" />
         </div>
       </div>
-      <WalletQRButton />
+
       <ActionsSkeleton />
     </div>
   );
