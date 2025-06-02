@@ -7,6 +7,7 @@ import { userHasWallet } from "@civic/auth-web3";
 import { useUser } from "@civic/auth-web3/react";
 import { Copy, Wallet } from "lucide-react";
 import { toast } from "sonner"; // Import Sonner toast
+import { Button } from "../ui/button";
 
 interface WalletQRButtonProps {
   tokenMint?: string;
@@ -61,13 +62,16 @@ export const WalletQRButton: React.FC<WalletQRButtonProps> = ({
 
   return (
     <>
-      <button
+      <Button
         onClick={() => setIsOpen(true)}
         disabled={!hasWallet}
-        className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+        variant="primary"
+        size="sm"
       >
-        💰 Tip Me
-      </button>
+        <span className="flex items-center gap-x-1">
+          💰 <span>Tip Me</span>
+        </span>
+      </Button>
 
       <Modal
         isOpen={isOpen}

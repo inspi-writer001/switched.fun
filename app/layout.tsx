@@ -6,13 +6,14 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { CivicAuthProvider } from "@civic/auth-web3/nextjs";
 import CreateWallet from "@/components/civic/create-wallet";
+import { ReactNode } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "switched.fun",
-  description: "Livestream And Get Fan Rewards",
-};
+interface CreatorLayoutProps {
+  params: { username: string };
+  children: ReactNode;
+}
 
 export default function RootLayout({
   children,

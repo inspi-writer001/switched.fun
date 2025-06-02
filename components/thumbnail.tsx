@@ -9,14 +9,14 @@ interface ThumbnailProps {
   fallback: string;
   isLive: boolean;
   username: string;
-};
+}
 
-export const Thumbnail = ({ 
+export const Thumbnail = ({
   src,
   fallback,
   isLive,
   username,
- }: ThumbnailProps) => {
+}: ThumbnailProps) => {
   let content;
 
   if (!src) {
@@ -30,7 +30,7 @@ export const Thumbnail = ({
           isLive={isLive}
         />
       </div>
-    )
+    );
   } else {
     content = (
       <Image
@@ -39,7 +39,7 @@ export const Thumbnail = ({
         alt="Thumbnail"
         className="object-cover transition-transform group-hover:translate-x-2 group-hover:-translate-y-2 rounded-md"
       />
-    )
+    );
   }
 
   return (
