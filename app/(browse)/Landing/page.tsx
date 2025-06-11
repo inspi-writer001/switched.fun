@@ -15,7 +15,7 @@ const VideoHero = () => {
 
   const pathname = usePathname();
 
-  if(pathname !== "/") return null;
+  if (pathname !== "/") return null;
 
   const carouselImages = [
     {
@@ -72,7 +72,7 @@ const VideoHero = () => {
           // Explicitly set the src attribute in case the source tag isn't working
           if (!video.src) {
             video.src =
-              "https://cdn.gpteng.co/df8c4dcf-c6de-48fe-adf6-26cec00a3a8f/Gaming_Coding_Streaming.mp4";
+              "https://res.cloudinary.com/detr9iyys/video/upload/v1749460898/bujanu6mz2ywqmyrxbtm.mp4";
           }
 
           await video.play();
@@ -121,7 +121,7 @@ const VideoHero = () => {
           loop
           playsInline
           preload="auto"
-          src="https://res.cloudinary.com/detr9iyys/video/upload/v1746621719/n9uzeedormtzopsksiwm.mp4"
+          src="https://res.cloudinary.com/detr9iyys/video/upload/v1749460898/bujanu6mz2ywqmyrxbtm.mp4"
         />
       )}
 

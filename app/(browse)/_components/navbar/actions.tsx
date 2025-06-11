@@ -111,7 +111,7 @@ export const Actions = () => {
       <Dialog onOpenChange={setOpenUsernameModal} open={openUsernameModal}>
         <DialogClose />
         <DialogContent>
-          <h1 className="text-center text-2xl font-bold">Update Username</h1>
+          <h1 className="text-center text-2xl font-bold">Choose a Username</h1>
           <form className="py-4 px-2" onSubmit={handleOnSubmit}>
             <Input
               className="w-full"

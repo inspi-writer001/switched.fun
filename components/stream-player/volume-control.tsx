@@ -1,6 +1,7 @@
 "use client";
 
 import { Volume1, Volume2, VolumeX } from "lucide-react";
+import { useEffect, useRef } from "react"; // Added useEffect and useRef
 
 import { Hint } from "@/components/hint";
 import { Slider } from "@/components/ui/slider";
@@ -9,18 +10,26 @@ interface VolumeControlProps {
   onToggle: () => void;
   onChange: (value: number) => void;
   value: number;
-};
+}
 
 export const VolumeControl = ({
   onToggle,
   onChange,
   value,
 }: VolumeControlProps) => {
+  const initialRender = useRef(true); // Track initial render
+
+  useEffect(() => {
+    if (initialRender.current && value === 0) {
+      onChange(50); // Set default volume to 50% on first render
+    }
+    initialRender.current = false;
+  }, [value, onChange]);
+
   const isMuted = value === 0;
   const isAboveHalf = value > 50;
 
   let Icon = Volume1;
-
   if (isMuted) {
     Icon = VolumeX;
   } else if (isAboveHalf) {

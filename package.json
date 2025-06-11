@@ -12,6 +12,8 @@
   "dependencies": {
     "@civic/auth": "^0.5.2",
     "@civic/auth-web3": "^0.5.5",
+    "@emoji-mart/data": "^1.2.1",
+    "@emoji-mart/react": "^1.1.1",
     "@livekit/components-react": "^1.4.2",
     "@prisma/client": "^5.6.0",
     "@radix-ui/react-avatar": "^1.0.4",
@@ -35,6 +37,9 @@
     "dayjs": "^1.11.13",
     "dotenv": "^16.5.0",
     "embla-carousel-react": "^8.6.0",
+    "emoji-mart": "^5.6.0",
+    "emoji-picker-react": "^4.12.2",
+    "framer-motion": "^12.16.0",
     "jwt-decode": "^4.0.0",
     "livekit-client": "^1.15.4",
     "livekit-server-sdk": "^1.2.7",
