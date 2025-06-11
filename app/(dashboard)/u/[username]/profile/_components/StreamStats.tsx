@@ -2,6 +2,8 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, Clock } from "lucide-react";
 
+const NA = "N/A";
+
 const StreamStats = () => {
   return (
     <Card className="overflow-hidden">
@@ -18,7 +20,7 @@ const StreamStats = () => {
                 <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">1,250</p>
+                <p className="text-2xl font-bold">{NA}</p>
                 <div className="text-xs text-muted-foreground">
                   Total viewers this month
                 </div>
@@ -31,7 +33,7 @@ const StreamStats = () => {
                 <Clock className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">24h</p>
+                <p className="text-2xl font-bold">{NA}</p>
                 <div className="text-xs text-muted-foreground">
                   Stream time this month
                 </div>
@@ -42,15 +44,15 @@ const StreamStats = () => {
         <div className="mt-4 pt-4 border-t">
           <div className="flex justify-between text-sm mb-1">
             <span className="text-muted-foreground">Last stream</span>
-            <span className="font-medium">2 hours ago</span>
+            <span className="font-medium">{NA}</span>
           </div>
           <div className="flex justify-between text-sm mb-1">
             <span className="text-muted-foreground">Avg. viewers</span>
-            <span className="font-medium">42 per stream</span>
+            <span className="font-medium">{NA}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Avg. tips</span>
-            <span className="font-medium">$38.45 per stream</span>
+            <span className="font-medium">{NA}</span>
           </div>
         </div>
       </CardContent>
