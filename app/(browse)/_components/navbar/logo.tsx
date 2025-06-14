@@ -14,10 +14,10 @@ export const Logo = () => {
       <div className="flex items-center gap-x-4 hover:opacity-75 transition">
         <div className="rounded-full p-1 mr-12 shrink-0 lg:mr-0 lg:shrink">
           <Image
-            src="/image/logo.jpg"
+            src="/image/switched-logo.svg"
             alt="Switched.fun"
-            height="50"
-            width="50"
+            height="40"
+            width="40"
             className="rounded-full"
           />
         </div>
