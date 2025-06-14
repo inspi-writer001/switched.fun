@@ -4,6 +4,7 @@ import { getUserByUsername } from "@/lib/user-service";
 import { isFollowingUser } from "@/lib/follow-service";
 import { isBlockedByUser } from "@/lib/block-service";
 import { StreamPlayer } from "@/components/stream-player";
+import { getCachedData } from "@/lib/cache";
 
 interface UserPageProps {
   params: {
@@ -35,5 +36,7 @@ const UserPage = async ({
     />
   );
 }
- 
+
+export const revalidate = 60;
+
 export default UserPage;

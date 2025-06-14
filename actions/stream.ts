@@ -3,17 +3,13 @@
 import { Stream } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-import { db } from "@/lib/db";
 import { getSelf } from "@/lib/auth-service";
+import { getStreamByUserId, updateStream as updateStreamService } from "@/lib/stream-service";
 
 export const updateStream = async (values: Partial<Stream>) => {
   try {
     const self = await getSelf();
-    const selfStream = await db.stream.findUnique({
-      where: {
-        userId: self.id,
-      },
-    });
+    const selfStream = await getStreamByUserId(self.id);
 
     if (!selfStream) {
       throw new Error("Stream not found");
@@ -27,14 +23,7 @@ export const updateStream = async (values: Partial<Stream>) => {
       isChatDelayed: values.isChatDelayed,
     };
 
-    const stream = await db.stream.update({
-      where: {
-        id: selfStream.id,
-      },
-      data: {
-        ...validData,
-      },
-    });
+    const stream = await updateStreamService(selfStream.id, validData);
 
     revalidatePath(`/u/${self.username}/chat`);
     revalidatePath(`/u/${self.username}`);
