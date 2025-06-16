@@ -11,88 +11,112 @@ export const getSearch = async (term?: string) => {
     userId = null;
   }
 
-  let streams = [];
+  let users = [];
 
   if (userId) {
-    streams = await db.stream.findMany({
+    users = await db.user.findMany({
       where: {
-        user: {
-          NOT: {
-            blocking: {
-              some: {
-                blockedId: userId,
-              },
+        NOT: {
+          blocking: {
+            some: {
+              blockedId: userId,
             },
           },
         },
         OR: [
           {
-            name: {
+            username: {
               contains: term,
+              mode: "insensitive",
             },
           },
           {
-            user: {
-              username: {
-                contains: term,
-              },
-            }
+            bio: {
+              contains: term,
+              mode: "insensitive",
+            },
           },
         ],
       },
       select: {
-        user: true,
         id: true,
-        name: true,
-        isLive: true,
-        thumbnailUrl: true,
-        updatedAt: true,
+        username: true,
+        bio: true,
+        imageUrl: true,
+        stream: {
+          select: {
+            id: true,
+            isLive: true,
+            name: true,
+            thumbnailUrl: true,
+          },
+        },
+        _count: {
+          select: {
+            followedBy: true,
+          },
+        },
       },
       orderBy: [
         {
-          isLive: "desc",
+          stream: {
+            isLive: "desc",
+          },
         },
         {
-          updatedAt: "desc",
+          createdAt: "desc",
         },
       ],
     });
   } else {
-    streams = await db.stream.findMany({
+    users = await db.user.findMany({
       where: {
         OR: [
           {
-            name: {
+            username: {
               contains: term,
+              mode: "insensitive",
             },
           },
           {
-            user: {
-              username: {
-                contains: term,
-              },
-            }
+            bio: {
+              contains: term,
+              mode: "insensitive",
+            },
           },
         ],
       },
       select: {
-        user: true,
         id: true,
-        name: true,
-        isLive: true,
-        thumbnailUrl: true,
-        updatedAt: true,
+        username: true,
+        bio: true,
+        imageUrl: true,
+        stream: {
+          select: {
+            id: true,
+            isLive: true,
+            name: true,
+            thumbnailUrl: true,
+          },
+        },
+        _count: {
+          select: {
+            followedBy: true,
+          },
+        },
       },
       orderBy: [
         {
-          isLive: "desc",
+          stream: {
+            isLive: "desc",
+          },
         },
         {
-          updatedAt: "desc",
+          createdAt: "desc",
         },
       ],
     });
-  };
+  }
 
-  return streams;
+  return users;
 };

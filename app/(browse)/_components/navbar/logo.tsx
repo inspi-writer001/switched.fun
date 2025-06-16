@@ -12,13 +12,13 @@ export const Logo = () => {
   return (
     <Link href="/">
       <div className="flex items-center gap-x-4 hover:opacity-75 transition">
-        <div className="rounded-full p-1 mr-12 shrink-0 lg:mr-0 lg:shrink">
+        <div className="p-1 mr-12 shrink-0 lg:mr-0 lg:shrink">
           <Image
             src="/image/switched-logo.svg"
             alt="Switched.fun"
             height="40"
             width="40"
-            className="rounded-full"
+            className=""
           />
         </div>
         <div className={cn("hidden lg:block", font.className)}>

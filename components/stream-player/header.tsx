@@ -109,7 +109,7 @@ export const Header = ({
         <div className="flex items-center gap-x-2">
           <Button
             onClick={handleShareClick}
-            variant="primary"
+            variant="gradient"
             size="sm"
             className="flex items-center"
           >

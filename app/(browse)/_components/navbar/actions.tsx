@@ -10,6 +10,7 @@ import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { getSelf } from "@/lib/auth-service";
 import { checkOrCreateUser } from "@/actions/checkUser";
+import GoLive from "./goLive";
 
 export const Actions = () => {
   const [loading, setLoading] = useState(false); // for sign‑in button
@@ -40,12 +41,13 @@ export const Actions = () => {
     run();
   }, [user]);
 
-  // 👉 2️⃣ Handle the “Login” button
+  // 👉 2️⃣ Handle the "Login" button
   async function handleLogin() {
     setLoading(true);
     try {
-      await signIn("iframe");
-    } catch (e) {
+      await signIn();
+    } catch (error) {
+      console.error("Error signing in:", error);
     } finally {
       setLoading(false);
     }
@@ -74,6 +76,7 @@ export const Actions = () => {
 
   return (
     <div className="flex items-center justify-end gap-x-2 ml-4 lg:ml-0">
+      {!!user && <GoLive user={currentUser} />}
       {!!user && (
         <div className="flex items-center gap-x-4">
           <Button

@@ -141,9 +141,9 @@ const VideoHero = () => {
       {/* Content positioned over the video */}
       <div className="absolute inset-0 flex flex-col justify-end p-8 z-10">
         <div className="max-w-2xl">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-display gradient-text mb-4">
+          <div className="text-4xl md:text-5xl lg:text-6xl gradient-text mb-4">
             Livestream And Get Fan Rewards
-          </h1>
+          </div>
           <p className="text-xl text-white/80 mb-6">
             Gaming, coding, live events, and creative content — all powered by
             Solana blockchain.

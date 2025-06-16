@@ -158,7 +158,7 @@ export const ChatForm = ({
                 key={emoji}
                 type="button"
                 size="icon"
-                variant="ghost"
+                variant="gradient"
                 onClick={() => onReact(emoji)}
               >
                 {emoji}
@@ -169,7 +169,12 @@ export const ChatForm = ({
       </div>
 
       <div className="ml-auto flex items-center gap-x-2">
-        <Button type="submit" variant="primary" size="sm" disabled={isDisabled}>
+        <Button
+          type="submit"
+          variant="gradient"
+          size="sm"
+          disabled={isDisabled}
+        >
           Chat
         </Button>
       </div>
