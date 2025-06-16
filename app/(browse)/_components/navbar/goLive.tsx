@@ -24,9 +24,10 @@ interface GoLiveProps {
     id: string;
     username?: string;
   } | null;
+  size?: "default" | "sm" | "lg" | "icon";
 }
 
-const GoLive = ({ user }: GoLiveProps) => {
+const GoLive = ({ user, size = "default" }: GoLiveProps) => {
   const [stream, setStream] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,7 +97,7 @@ const GoLive = ({ user }: GoLiveProps) => {
 
   if (!user) {
     return (
-      <Button variant="primary" disabled>
+      <Button variant="primary" disabled size={size}>
         Go Live
       </Button>
     );
@@ -105,7 +106,9 @@ const GoLive = ({ user }: GoLiveProps) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="primary">Go Live</Button>
+        <Button variant="primary" size={size}>
+          Go Live
+        </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>

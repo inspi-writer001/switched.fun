@@ -6,12 +6,40 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ImageCarousel from "./_components/ImageCarousel";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import GoLive from "../_components/navbar/goLive";
+import { useUser } from "@civic/auth-web3/react";
+import { getSelf } from "@/lib/auth-service";
+import { checkOrCreateUser } from "@/actions/checkUser";
 
 const VideoHero = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [showCarousel, setShowCarousel] = useState(false);
+  const { user } = useUser();
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [openUsernameModal, setOpenUsernameModal] = useState(false);
+
+  // // 👉 1️⃣ When Civic Auth user becomes available (sign‑in/sign‑up), run our check ONCE
+  useEffect(() => {
+    if (!user) return;
+
+    const run = async () => {
+      try {
+        const { user: me, needsUsername } = await checkOrCreateUser(user.id);
+        console.log("username", me);
+        setCurrentUser(me);
+
+        if (needsUsername) {
+          setOpenUsernameModal(true);
+        }
+      } catch (err) {
+        console.error("Error during user check:", err);
+      }
+    };
+
+    run();
+  }, [user]);
 
   const pathname = usePathname();
 
@@ -149,12 +177,7 @@ const VideoHero = () => {
             Solana blockchain.
           </p>
           <div className="flex flex-wrap gap-4">
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-primary to-accent hover:opacity-90"
-            >
-              Start Watching
-            </Button>
+            {!!user && <GoLive user={currentUser} size="lg" />}
             <Link href="/explore">
               <Button
                 size="lg"
