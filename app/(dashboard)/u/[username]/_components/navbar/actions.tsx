@@ -28,16 +28,16 @@ export const Actions = () => {
           Profile
         </Button>
       </div>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="text-muted-foreground hover:text-primary"
-      >
-        <Link href="/">
-          <LogOut className="h-5 w-5 mr-2" />
+      <Link href="/" className="flex items-center">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-muted-foreground hover:text-primary"
+        >
           Exit
-        </Link>
-      </Button>
+        </Button>
+        <LogOut className="h-5 w-5 mr-2" />
+      </Link>
     </div>
   );
 };
