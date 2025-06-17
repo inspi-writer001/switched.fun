@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
 import React, { useState, useEffect } from "react";
-import { 
-  Carousel, 
-  CarouselContent, 
-  CarouselItem, 
-  CarouselPrevious, 
-  CarouselNext 
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
 } from "@/components/ui/carousel";
 
 interface Image {
@@ -45,25 +45,24 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
   }, [autoPlay, interval, api]);
 
   // Update current index when carousel changes
-  const handleSelect = () => {
-    if (!api) return;
-    const selectedIndex = api.selectedScrollSnap();
-    setCurrentIndex(selectedIndex);
-  };
-
   useEffect(() => {
     if (!api) return;
-    
+
+    const handleSelect = () => {
+      const selectedIndex = api.selectedScrollSnap();
+      setCurrentIndex(selectedIndex);
+    };
+
     api.on("select", handleSelect);
-    
+
     return () => {
       api.off("select", handleSelect);
     };
   }, [api]);
 
   return (
-    <Carousel 
-      className={`w-full ${className}`} 
+    <Carousel
+      className={`w-full ${className}`}
       opts={{
         align: "start",
         loop: true,
@@ -81,13 +80,15 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent"></div>
               <div className="absolute bottom-0 left-0 p-6">
-                <h3 className="text-2xl font-bold text-white">{image.caption}</h3>
+                <h3 className="text-2xl font-bold text-white">
+                  {image.caption}
+                </h3>
               </div>
             </div>
           </CarouselItem>
         ))}
       </CarouselContent>
-      
+
       {showControls && (
         <>
           <CarouselPrevious className="left-4 bg-black/50 hover:bg-black/75 border-none text-white" />

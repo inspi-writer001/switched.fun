@@ -13,7 +13,10 @@ export default function TopDonations() {
   const userContext = useUser();
   const hasWallet = userHasWallet(userContext);
 
-  // 2️⃣ Don’t fetch anything until wallet’s connected
+  // 3️⃣ Now it's safe to call the hook - moved before conditional return
+  const { top, loading, error } = useTopDonations(5, 100);
+
+  // 2️⃣ Don't fetch anything until wallet's connected
   if (!hasWallet) {
     return (
       <Card className="p-4">
@@ -24,9 +27,6 @@ export default function TopDonations() {
       </Card>
     );
   }
-
-  // 3️⃣ Now it’s safe to call the hook
-  const { top, loading, error } = useTopDonations(5, 100);
 
   const shorten = (addr: string) =>
     addr.length > 8 ? `${addr.slice(0, 4)}…${addr.slice(-4)}` : addr;

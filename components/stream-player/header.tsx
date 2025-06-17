@@ -42,7 +42,7 @@ export const Header = ({
   const isHost = viewerIdentity === hostAsViewer;
 
   // Construct the share message:
-  const shareText = `Join my livestream and get to interact with me live—let’s connect: ${window.location.href}`;
+  const shareText = `Join my livestream and get to interact with me live—let's connect: ${window.location.href}`;
 
   const handleShareClick = async () => {
     // If Web Share API is available (mobile browsers & some desktops)
@@ -50,7 +50,7 @@ export const Header = ({
       try {
         await navigator.share({
           title: `Live now: ${hostName}'s stream`,
-          text: `Join my livestream and get to interact with me live—let’s connect:`,
+          text: `Join my livestream and get to interact with me live—let's connect:`,
           url: window.location.href,
         });
         toast.success("Share dialog opened");
@@ -105,11 +105,11 @@ export const Header = ({
           </div>
         </div>
         <WalletQRButton />
-        {/* ←––– “Share Stream” button with Sonner toast –––→ */}
+        {/* ←––– "Share Stream" button with Sonner toast –––→ */}
         <div className="flex items-center gap-x-2">
           <Button
             onClick={handleShareClick}
-            variant="gradient"
+            variant="primary"
             size="sm"
             className="flex items-center"
           >
