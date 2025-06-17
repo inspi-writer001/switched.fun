@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-}  
+}
 
 datasource db {
   provider     = "postgresql"
@@ -24,23 +24,52 @@ model User {
 }
 
 model Stream {
-  id                  String   @id @default(uuid())
+  id                  String    @id @default(uuid())
   name                String
   thumbnailUrl        String?
-  ingressId           String?  @unique
+  ingressId           String?   @unique
   serverUrl           String?
   streamKey           String?
-  isLive              Boolean  @default(false)
-  isChatEnabled       Boolean  @default(true)
-  isChatDelayed       Boolean  @default(false)
-  isChatFollowersOnly Boolean  @default(false)
-  userId              String   @unique
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isLive              Boolean   @default(false)
+  isChatEnabled       Boolean   @default(true)
+  isChatDelayed       Boolean   @default(false)
+  isChatFollowersOnly Boolean   @default(false)
+  userId              String    @unique
+  createdAt           DateTime  @default(now())
+  streamStartedAt     DateTime?
+  updatedAt           DateTime  @updatedAt
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([ingressId])
+}
+
+model PlatformAnalytics {
+  id String @id @default(uuid())
+
+  // Stream Metrics
+  totalStreamsCreated Int @default(0)
+  totalLiveStreams    Int @default(0)
+  totalStreamHours    Int @default(0) // Total hours broadcasted across all streams
+
+  // User Metrics  
+  totalUsers           Int @default(0)
+  totalStreamers       Int @default(0) // Users who have created at least one stream
+  totalActiveStreamers Int @default(0) // Streamers who went live in last 30 days
+
+  // Viewership Metrics
+  totalViews            Int @default(0) // Total view sessions across all streams
+  totalWatchTimeMinutes Int @default(0) // Total minutes watched across all streams
+  peakConcurrentViewers Int @default(0) // Highest concurrent viewers across platform
+
+  // Engagement Metrics
+  totalFollows      Int @default(0)
+  totalChatMessages Int @default(0)
+  totalBlocks       Int @default(0)
+
+  // Time tracking
+  lastUpdated DateTime @default(now()) @updatedAt
+  createdAt   DateTime @default(now())
 }
 
 model Follow {
