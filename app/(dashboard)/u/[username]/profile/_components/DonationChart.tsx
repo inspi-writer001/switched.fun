@@ -43,7 +43,7 @@ export default function DonationChart({ period }: DonationChartProps) {
   // ─── Step 1: historical tips ───────────────────────────────────────────────
   const { tips } = useRecentTips(100);
 
-  // ─── Step 2: on‐chain balances & prices (to replicate TipStats’ “Others”) ──
+  // ─── Step 2: on‐chain balances & prices (to replicate TipStats' "Others") ──
   const {
     solBalance,
     splTokens,
@@ -52,16 +52,16 @@ export default function DonationChart({ period }: DonationChartProps) {
   } = useTokenBalances();
   const { prices, loading: priceLoading, error: priceError } = usePrices();
 
-  // compute on‐chain “othersUSD” exactly the same way as TipStats:
+  // compute on‐chain "othersUSD" exactly the same way as TipStats:
   const onChainOthersUSD = useMemo(() => {
     if (balLoading || priceLoading || balError || priceError) return 0;
     // sum of every SPL token whose mint ≠ USDC_MINT and ≠ USDT_MINT:
     return splTokens
       .filter(({ mint }) => mint !== USDC_MINT && mint !== USDT_MINT)
       .reduce((sum, { amount }) => sum + amount * (prices.sol ?? 0), 0);
-  }, [splTokens, prices, balLoading, priceLoading, balError, priceError]);
+  }, [splTokens, prices.sol, balLoading, priceLoading, balError, priceError]);
 
-  // ─── Step 3: build historical‐tips buckets, then append a “Now” bucket ────
+  // ─── Step 3: build historical‐tips buckets, then append a "Now" bucket ────
   //    Data rows will look like:
   //    { name: string, SOL: number, USDC: number, USDT: number, Others: number, total: number }
   const data = useMemo(() => {
@@ -151,8 +151,8 @@ export default function DonationChart({ period }: DonationChartProps) {
       return row;
     });
 
-    // 3.4 Append one more row for “Now” (current on‐chain balances)
-    //     We label it e.g. “Now” or “Current” so it appears as the last column
+    // 3.4 Append one more row for "Now" (current on‐chain balances)
+    //     We label it e.g. "Now" or "Current" so it appears as the last column
     const nowLabel = "Now";
     const solUSD =
       solBalance != null && prices.sol != null ? solBalance * prices.sol : 0;
@@ -175,18 +175,7 @@ export default function DonationChart({ period }: DonationChartProps) {
     };
 
     return [...historicalRows, nowRow];
-  }, [
-    tips,
-    period,
-    solBalance,
-    splTokens,
-    prices,
-    balLoading,
-    priceLoading,
-    balError,
-    priceError,
-    onChainOthersUSD,
-  ]);
+  }, [tips, period, solBalance, splTokens, prices, onChainOthersUSD]);
 
   // ─── Step 4: seriesConfig + render ────────────────────────────────────────
   const seriesConfig = {
@@ -223,7 +212,7 @@ export default function DonationChart({ period }: DonationChartProps) {
           <Bar dataKey="USDT" fill={TOKEN_COLORS.USDT} name="USDT" />
           <Bar dataKey="Others" fill={TOKEN_COLORS.Others} name="Others" />
 
-          {/* A “Total” line on top */}
+          {/* A "Total" line on top */}
           <Line
             type="monotone"
             dataKey="total"

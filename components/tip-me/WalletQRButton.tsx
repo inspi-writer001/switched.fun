@@ -65,7 +65,7 @@ export const WalletQRButton: React.FC<WalletQRButtonProps> = ({
       <Button
         onClick={() => setIsOpen(true)}
         disabled={!hasWallet}
-        variant="gradient"
+        variant="primary"
         size="sm"
       >
         <span className="flex items-center gap-x-1">
@@ -126,7 +126,8 @@ export const WalletQRButton: React.FC<WalletQRButtonProps> = ({
                 </div>
                 <Button
                   onClick={handleCopy}
-                  variant="gradient"
+                  variant="primary"
+                  size="sm"
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   <Copy className="w-4 h-4" />
@@ -141,7 +142,7 @@ export const WalletQRButton: React.FC<WalletQRButtonProps> = ({
 
           <Button
             onClick={() => setIsOpen(false)}
-            variant="gradient"
+            variant="primary"
             className="w-full py-3 px-6 bg-gradient-to-r from-primary to-secondary rounded-lg text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
           >
             Close

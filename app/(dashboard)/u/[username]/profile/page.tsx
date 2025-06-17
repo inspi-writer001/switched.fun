@@ -97,7 +97,7 @@ const Profile = () => {
             <button
               onClick={() => setIsOpen(true)}
               disabled={!hasWallet}
-              className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-md disabled:opacity-50"
+              className="inline-flex items-center px-4 py-2 bg-slate-900 text-white rounded-md disabled:opacity-50"
             >
               <Wallet className="w-4 h-4 mr-2" />
               Deposit

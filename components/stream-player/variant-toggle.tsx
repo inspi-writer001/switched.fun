@@ -24,8 +24,9 @@ export const VariantToggle = () => {
     <Hint label={label} side="left" asChild>
       <Button
         onClick={onToggle}
-        variant="gradient"
-        className="h-auto p-2 hover:bg-white/10 hover:text-primary bg-transparent"
+        variant="primary"
+        size="sm"
+        className="ml-auto"
       >
         <Icon className="h-4 w-4" />
       </Button>

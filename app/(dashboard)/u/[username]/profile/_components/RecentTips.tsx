@@ -13,7 +13,10 @@ export default function RecentTips() {
   const userContext = useUser();
   const hasWallet = userHasWallet(userContext);
 
-  // 2️⃣ Don’t fetch or render tips until wallet is connected
+  // 3️⃣ Now safe to fetch - moved before conditional return
+  const { tips, loading, error } = useRecentTips(5);
+
+  // 2️⃣ Don't fetch or render tips until wallet is connected
   if (!hasWallet) {
     return (
       <Card className="p-4">
@@ -24,9 +27,6 @@ export default function RecentTips() {
       </Card>
     );
   }
-
-  // 3️⃣ Now safe to fetch
-  const { tips, loading, error } = useRecentTips(5);
 
   // helper to trim long addresses
   const shorten = (addr: string) =>

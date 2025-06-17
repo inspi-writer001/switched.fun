@@ -19,6 +19,7 @@ const VideoHero = () => {
   const { user } = useUser();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [openUsernameModal, setOpenUsernameModal] = useState(false);
+  const pathname = usePathname();
 
   // // 👉 1️⃣ When Civic Auth user becomes available (sign‑in/sign‑up), run our check ONCE
   useEffect(() => {
@@ -40,33 +41,6 @@ const VideoHero = () => {
 
     run();
   }, [user]);
-
-  const pathname = usePathname();
-
-  if (pathname !== "/") return null;
-
-  const carouselImages = [
-    {
-      url: "https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2671&q=80",
-      alt: "Person playing Call of Duty",
-      caption: "Live Gaming Streams",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1580927752452-89d86da3fa0a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2670&q=80",
-      alt: "Person coding",
-      caption: "Live Coding Sessions",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2670&q=80",
-      alt: "Live event with audience",
-      caption: "Live Events",
-    },
-    {
-      url: "https://images.unsplash.com/photo-1491933382434-500287f9b54b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1764&q=80",
-      alt: "Content creator with equipment",
-      caption: "Content Creation",
-    },
-  ];
 
   useEffect(() => {
     if (videoRef.current) {
@@ -126,6 +100,31 @@ const VideoHero = () => {
       setShowCarousel(true);
     }
   }, []);
+
+  if (pathname !== "/") return null;
+
+  const carouselImages = [
+    {
+      url: "https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2671&q=80",
+      alt: "Person playing Call of Duty",
+      caption: "Live Gaming Streams",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1580927752452-89d86da3fa0a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2670&q=80",
+      alt: "Person coding",
+      caption: "Live Coding Sessions",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2670&q=80",
+      alt: "Live event with audience",
+      caption: "Live Events",
+    },
+    {
+      url: "https://images.unsplash.com/photo-1491933382434-500287f9b54b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1764&q=80",
+      alt: "Content creator with equipment",
+      caption: "Content Creation",
+    },
+  ];
 
   return (
     <div className="relative w-full h-[60vh] min-h-[500px] overflow-hidden rounded-xl">
