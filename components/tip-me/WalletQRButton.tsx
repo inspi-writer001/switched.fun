@@ -11,10 +11,12 @@ import { Button } from "../ui/button";
 
 interface WalletQRButtonProps {
   tokenMint?: string;
+  isHost?: boolean;
 }
 
 export const WalletQRButton: React.FC<WalletQRButtonProps> = ({
   tokenMint,
+  isHost = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const userContext = useUser();
@@ -64,7 +66,7 @@ export const WalletQRButton: React.FC<WalletQRButtonProps> = ({
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        disabled={!hasWallet}
+        disabled={!hasWallet || isHost}
         variant="primary"
         size="sm"
       >
@@ -107,7 +109,7 @@ export const WalletQRButton: React.FC<WalletQRButtonProps> = ({
             </p>
           </div>
 
-          {hasWallet ? (
+          {hasWallet && !isHost ? (
             <>
               <div className="relative p-4 bg-card rounded-xl border border-border card-hover">
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10" />
@@ -134,6 +136,10 @@ export const WalletQRButton: React.FC<WalletQRButtonProps> = ({
                 </Button>
               </div>
             </>
+          ) : isHost ? (
+            <div className="p-4 bg-muted/50 rounded-lg border border-border text-muted-foreground text-sm text-center">
+              You cannot tip yourself
+            </div>
           ) : (
             <div className="p-4 bg-destructive/10 rounded-lg border border-destructive text-destructive text-sm">
               Please connect your wallet first

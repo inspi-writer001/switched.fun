@@ -81,7 +81,7 @@ export default function TipStats() {
 
   return (
     <Card className="overflow-hidden">
-      <div className="bg-gradient-to-r from-primary to-accent py-2 px-4">
+      <div className="bg-slate-900 py-2 px-4">
         <span className="text-white text-sm font-medium">
           Total Tips Received (This Month)
         </span>

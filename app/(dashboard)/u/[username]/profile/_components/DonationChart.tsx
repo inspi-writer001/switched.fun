@@ -1,7 +1,7 @@
 // components/DonationChart.tsx
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import {
   BarChart,
@@ -15,6 +15,7 @@ import {
   Line,
 } from "recharts";
 import dayjs from "dayjs";
+import { Button } from "@/components/ui/button";
 
 // ─── pull in token‐balance logic ─────────────────────────────────────────────
 import { useTokenBalances } from "./useTokenBalances";
@@ -39,7 +40,13 @@ const TOKEN_COLORS: Record<string, string> = {
   Total: "#9b87f5",
 };
 
-export default function DonationChart({ period }: DonationChartProps) {
+export default function DonationChart({
+  period: initialPeriod,
+}: DonationChartProps) {
+  const [period, setPeriod] = useState<"day" | "week" | "month" | "year">(
+    initialPeriod
+  );
+
   // ─── Step 1: historical tips ───────────────────────────────────────────────
   const { tips } = useRecentTips(100);
 
@@ -187,42 +194,62 @@ export default function DonationChart({ period }: DonationChartProps) {
   };
 
   return (
-    <ChartContainer config={seriesConfig} className="h-[350px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-          <XAxis dataKey="name" />
-          <YAxis tickFormatter={(v) => `$${v.toFixed(0)}`} width={65} />
-          <Tooltip
-            content={(props: any) =>
-              props.active && props.payload?.length ? (
-                <ChartTooltipContent
-                  payload={props.payload}
-                  label={props.label}
-                  active
-                />
-              ) : null
+    <div className="space-y-4">
+      {/* Period Selector */}
+      <div className="flex gap-2">
+        {(["day", "week", "month", "year"] as const).map((p) => (
+          <Button
+            key={p}
+            variant={period === p ? "default" : "outline"}
+            size="sm"
+            onClick={() => setPeriod(p)}
+            className={
+              period === p ? "bg-slate-900 text-white hover:bg-slate-800" : ""
             }
-          />
-          <Legend />
+          >
+            {p.charAt(0).toUpperCase() + p.slice(1)}
+          </Button>
+        ))}
+      </div>
 
-          {/* SOL, USDC, USDT, Others bars */}
-          <Bar dataKey="SOL" fill={TOKEN_COLORS.SOL} name="SOL" />
-          <Bar dataKey="USDC" fill={TOKEN_COLORS.USDC} name="USDC" />
-          <Bar dataKey="USDT" fill={TOKEN_COLORS.USDT} name="USDT" />
-          <Bar dataKey="Others" fill={TOKEN_COLORS.Others} name="Others" />
+      {/* Chart */}
+      <ChartContainer config={seriesConfig} className="h-[350px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="name" />
+            <YAxis tickFormatter={(v) => `$${v.toFixed(0)}`} width={65} />
+            <Tooltip
+              content={(props: any) =>
+                props.active && props.payload?.length ? (
+                  <ChartTooltipContent
+                    payload={props.payload}
+                    label={props.label}
+                    active
+                  />
+                ) : null
+              }
+            />
+            <Legend />
 
-          {/* A "Total" line on top */}
-          <Line
-            type="monotone"
-            dataKey="total"
-            stroke={seriesConfig.total.color}
-            strokeWidth={2}
-            dot={{ r: 4 }}
-            name={seriesConfig.total.label}
-          />
-        </BarChart>
-      </ResponsiveContainer>
-    </ChartContainer>
+            {/* SOL, USDC, USDT, Others bars */}
+            <Bar dataKey="SOL" fill={TOKEN_COLORS.SOL} name="SOL" />
+            <Bar dataKey="USDC" fill={TOKEN_COLORS.USDC} name="USDC" />
+            <Bar dataKey="USDT" fill={TOKEN_COLORS.USDT} name="USDT" />
+            <Bar dataKey="Others" fill={TOKEN_COLORS.Others} name="Others" />
+
+            {/* A "Total" line on top */}
+            <Line
+              type="monotone"
+              dataKey="total"
+              stroke={seriesConfig.total.color}
+              strokeWidth={2}
+              dot={{ r: 4 }}
+              name={seriesConfig.total.label}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartContainer>
+    </div>
   );
 }

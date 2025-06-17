@@ -89,9 +89,7 @@ const Profile = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between">
-          <h1 className="text-3xl font-display gradient-text mb-8">
-            Streaming Dashboard
-          </h1>
+          <h1 className="text-3xl font-display mb-8">Streaming Dashboard</h1>
           {/* Header with QR trigger */}
           <div className="flex justify-between items-center mb-8">
             <button
@@ -218,25 +216,6 @@ const Profile = () => {
           <TabsContent value="donations" className="space-y-6">
             <Card className="p-4">
               <h2 className="text-xl font-semibold mb-4">Donation Analytics</h2>
-              <div className="flex justify-end mb-4">
-                <div className="inline-flex rounded-md shadow-sm" role="group">
-                  {["day", "week", "month", "year"].map((period) => (
-                    <button
-                      key={period}
-                      onClick={() => setSelectedPeriod(period as any)}
-                      className={`px-4 py-2 text-sm font-medium ${
-                        selectedPeriod === period
-                          ? "bg-primary text-white"
-                          : "bg-white text-gray-700 hover:bg-gray-50"
-                      } border border-gray-200 ${
-                        period === "day" ? "rounded-l-lg" : ""
-                      } ${period === "year" ? "rounded-r-lg" : ""}`}
-                    >
-                      {period.charAt(0).toUpperCase() + period.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               {/* <-- Swap in DonationChart here (with period) --> */}
               <DonationChart period={selectedPeriod} />
