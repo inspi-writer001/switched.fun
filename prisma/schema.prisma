@@ -21,6 +21,7 @@ model User {
   blocking       Block[]  @relation("Blocking")
   blockedBy      Block[]  @relation("BlockedBy")
   stream         Stream?
+  interests      UserInterest[]
 }
 
 model Stream {
@@ -35,19 +36,13 @@ model Stream {
   isChatDelayed       Boolean   @default(false)
   isChatFollowersOnly Boolean   @default(false)
   userId              String    @unique
-  categoryId          String?
-  subCategoryId       String?
   createdAt           DateTime  @default(now())
   streamStartedAt     DateTime?
   updatedAt           DateTime  @updatedAt
   user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category            Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  subCategory         SubCategory? @relation(fields: [subCategoryId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([ingressId])
-  @@index([categoryId])
-  @@index([subCategoryId])
 }
 
 model PlatformAnalytics {
@@ -108,14 +103,12 @@ model Category {
   id           String        @id @default(uuid())
   name         String        @unique
   slug         String        @unique
-  imageUrl     String?
   viewers      Int           @default(0)
   description  String?
   isActive     Boolean       @default(true)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   subCategories SubCategory[]
-  streams      Stream[]
 }
 
 model SubCategory {
@@ -130,9 +123,22 @@ model SubCategory {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  streams     Stream[]
+  userInterests UserInterest[]
 
   @@unique([categoryId, name])
   @@index([categoryId])
   @@index([slug])
+}
+
+model UserInterest {
+  id            String      @id @default(uuid())
+  userId        String
+  subCategoryId String
+  createdAt     DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subCategory   SubCategory @relation(fields: [subCategoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, subCategoryId])
+  @@index([userId])
+  @@index([subCategoryId])
 }
