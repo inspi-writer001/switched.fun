@@ -59,11 +59,11 @@ export const Actions = () => {
     setSubmitting(true);
     try {
       if (currentUser) {
-        await updateUser({ id: currentUser.id, username });
+        await updateUser({ id: currentUser.id, username: username.trim().replaceAll(" ", "_") });
       } else {
         await createUser({
           externalUserId: user!.id,
-          username,
+          username: username.trim().replaceAll(" ", "_"),
           imageUrl: user!.picture!,
         });
       }

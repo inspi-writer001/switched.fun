@@ -6,55 +6,52 @@ import { getCachedData, invalidateCache } from "@/lib/redis";
  * Throws if no user is found.
  */
 export const getUserByUsername = async (username: string) => {
-  return getCachedData({
-    key: `user:username:${username.toLowerCase()}`,
-    ttl: 300, // 5 minutes
-    fetchFn: async () => {
-      try {
-        const user = await db.user.findFirst({
-          where: {
-            username: {
-              equals: username,
-              mode: "insensitive",
-            },
-          },
+  // Decode URL and trim whitespace to handle potential encoding issues
+  const cleanUsername = decodeURIComponent(username).trim();
+
+  try {
+    const user = await db.user.findFirst({
+      where: {
+        username: {
+          equals: cleanUsername,
+          mode: "insensitive",
+        },
+      },
+      select: {
+        id: true,
+        externalUserId: true,
+        username: true,
+        bio: true,
+        imageUrl: true,
+        stream: {
           select: {
             id: true,
-            externalUserId: true,
-            username: true,
-            bio: true,
-            imageUrl: true,
-            stream: {
-              select: {
-                id: true,
-                isLive: true,
-                isChatDelayed: true,
-                isChatEnabled: true,
-                isChatFollowersOnly: true,
-                thumbnailUrl: true,
-                name: true,
-              },
-            },
-            _count: {
-              select: {
-                followedBy: true,
-              },
-            },
+            isLive: true,
+            isChatDelayed: true,
+            isChatEnabled: true,
+            isChatFollowersOnly: true,
+            thumbnailUrl: true,
+            name: true,
           },
-        });
+        },
+        _count: {
+          select: {
+            followedBy: true,
+          },
+        },
+      },
+    });
 
-        if (!user) {
-          console.error("User not found");
-          return null;
-        }
-
-        return user;
-      } catch (error) {
-        console.error("getUserByUsername Error:", error);
-        throw error;
-      }
+    if (!user) {
+      console.error("User not found");
+      return null;
     }
-  });
+
+    return user;
+  } catch (error) {
+    console.error("getUserByUsername Error:", error);
+    throw error;
+  }
 };
 
 /**
@@ -72,6 +69,11 @@ export const getUserById = async (id: string) => {
         },
         include: {
           stream: true,
+          interests: {
+            include: {
+              subCategory: true,
+            },
+          },
         },
       });
 
@@ -80,7 +82,7 @@ export const getUserById = async (id: string) => {
       }
 
       return user;
-    }
+    },
   });
 };
 
@@ -90,6 +92,6 @@ export const getUserById = async (id: string) => {
 export const invalidateUserCache = async (userId: string, username: string) => {
   await Promise.all([
     invalidateCache(`user:id:${userId}`),
-    invalidateCache(`user:username:${username.toLowerCase()}`)
+    invalidateCache(`user:username:${username.toLowerCase()}`),
   ]);
 };
