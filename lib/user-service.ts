@@ -69,11 +69,6 @@ export const getUserById = async (id: string) => {
         },
         include: {
           stream: true,
-          interests: {
-            include: {
-              subCategory: true,
-            },
-          },
         },
       });
 
