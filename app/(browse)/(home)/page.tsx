@@ -20,6 +20,9 @@ export default async function Page() {
       <Landing />
       <HydrationBoundary state={dehydratedState}>
         <div className="h-full p-8 max-w-screen-2xl mx-auto">
+          {/* <Suspense fallback={<div>Loading...</div>}>
+            <UsersCategories />
+          </Suspense> */}
           <Suspense fallback={<ResultsSkeleton />}>
             <Results />
           </Suspense>
