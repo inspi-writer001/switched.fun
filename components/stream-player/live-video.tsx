@@ -19,7 +19,7 @@ export const LiveVideo = ({
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [volume, setVolume] = useState(0);
+  const [volume, setVolume] = useState(100);
 
   const onVolumeChange = (value: number) => {
     setVolume(+value);
