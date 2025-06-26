@@ -38,7 +38,12 @@ next-env.d.ts
 
 
 .anchor
-target
+target/debug
+target/deploy
+target/release
+target/rust-analyzer
+target/sbf-solana-solana
+target/.rustc_info.json
 **/*.rs.bk
 test-ledger
 .yarn
