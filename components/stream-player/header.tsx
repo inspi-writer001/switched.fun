@@ -104,7 +104,7 @@ export const Header = ({
             )}
           </div>
         </div>
-        <WalletQRButton isHost={isHost} />
+        <WalletQRButton />
         {/* ←––– "Share Stream" button with Sonner toast –––→ */}
         <div className="flex items-center gap-x-2">
           <Button

@@ -12,6 +12,7 @@
   "dependencies": {
     "@civic/auth": "^0.5.2",
     "@civic/auth-web3": "^0.5.5",
+    "@coral-xyz/anchor": "^0.31.1",
     "@emoji-mart/data": "^1.2.1",
     "@emoji-mart/react": "^1.1.1",
     "@livekit/components-react": "^1.4.2",
@@ -32,6 +33,7 @@
     "@tanstack/react-table": "^8.10.7",
     "@uploadthing/react": "^6.0.2",
     "@upstash/redis": "^1.35.0",
+    "chai": "^5.2.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
@@ -66,6 +68,9 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@types/bn.js": "^5.2.0",
+    "@types/chai": "^5.2.2",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
@@ -74,9 +79,12 @@
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
     "eslint-config-next": "14.0.3",
+    "mocha": "^11.7.1",
     "postcss": "^8",
+    "prettier": "^3.6.1",
     "prisma": "^5.6.0",
     "tailwindcss": "^3.3.0",
+    "ts-mocha": "^11.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   }
