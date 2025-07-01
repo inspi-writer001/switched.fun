@@ -3,28 +3,39 @@ import { getRecommended } from "@/lib/recommended-service";
 
 import { Wrapper } from "./wrapper";
 import { Following, FollowingSkeleton } from "./following";
-import { 
-  Toggle, 
-  ToggleSkeleton
-} from "./toggle";
-import { 
-  Recommended, 
-  RecommendedSkeleton
-} from "./recommended";
-
+import { Toggle, ToggleSkeleton } from "./toggle";
+import { Recommended, RecommendedSkeleton } from "./recommended";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
 
 export const Sidebar = async () => {
-  const recommended = await getRecommended();
-  const following = await getFollowedUsers();
+  const queryClient = new QueryClient();
+
+  await queryClient.prefetchQuery({
+    queryKey: ["recommended"],
+    queryFn: () => getRecommended(),
+  });
+
+  await queryClient.prefetchQuery({
+    queryKey: ["followers"],
+    queryFn: () => getFollowedUsers(),
+  });
+
+  const dehydratedState = dehydrate(queryClient);
 
   return (
-    <Wrapper>
-      <Toggle />
-      <div className="space-y-4 pt-4 lg:pt-0">
-        <Following data={following} />
-        <Recommended data={recommended} />
-      </div>
-    </Wrapper>
+    <HydrationBoundary state={dehydratedState}>
+      <Wrapper>
+        <Toggle />
+        <div className="space-y-4 pt-4 lg:pt-0">
+          <Following />
+          <Recommended />
+        </div>
+      </Wrapper>
+    </HydrationBoundary>
   );
 };
 

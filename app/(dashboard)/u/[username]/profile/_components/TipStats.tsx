@@ -62,14 +62,6 @@ export default function TipStats() {
     priceError,
   ]);
 
-  // 4️⃣ Dev‐log
-  useEffect(() => {
-    console.log("SOL balance:", solBalance);
-    console.log("SPL tokens:", splTokens);
-    console.log("Prices:", prices);
-    console.log("Breakdown USD:", breakdown);
-    console.log("Total USD:", totalUSD);
-  }, [solBalance, splTokens, prices, breakdown, totalUSD]);
 
   // 5️⃣ Helper to render a value or show Loading…
   const renderAmt = (value: number) =>

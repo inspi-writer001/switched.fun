@@ -6,14 +6,14 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { CivicAuthProvider } from "@civic/auth-web3/nextjs";
 import CreateWallet from "@/components/civic/create-wallet";
-import { ReactNode } from "react";
+import Providers from "@/provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
-interface CreatorLayoutProps {
-  params: { username: string };
-  children: ReactNode;
-}
+export const metadata: Metadata = {
+  title: "Switched",
+  description: "Be rewarded for streaming",
+};
 
 export default function RootLayout({
   children,
@@ -30,7 +30,9 @@ export default function RootLayout({
         >
           <Toaster theme="light" position="top-right" />
           <CivicAuthProvider>
-            {children}
+            <Providers>
+              {children}
+            </Providers>
             <CreateWallet />
           </CivicAuthProvider>
         </ThemeProvider>

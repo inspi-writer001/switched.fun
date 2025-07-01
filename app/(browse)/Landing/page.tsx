@@ -8,8 +8,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import GoLive from "../_components/navbar/goLive";
 import { useUser } from "@civic/auth-web3/react";
-import { getSelf } from "@/lib/auth-service";
 import { checkOrCreateUser } from "@/actions/checkUser";
+
+// PENDING  TASK: Move current user to a global state (state management)
 
 const VideoHero = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -18,7 +19,6 @@ const VideoHero = () => {
   const [showCarousel, setShowCarousel] = useState(false);
   const { user } = useUser();
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [openUsernameModal, setOpenUsernameModal] = useState(false);
   const pathname = usePathname();
 
   // // 👉 1️⃣ When Civic Auth user becomes available (sign‑in/sign‑up), run our check ONCE
@@ -27,13 +27,8 @@ const VideoHero = () => {
 
     const run = async () => {
       try {
-        const { user: me, needsUsername } = await checkOrCreateUser(user.id);
-        console.log("username", me);
+        const { user: me } = await checkOrCreateUser(user.id);
         setCurrentUser(me);
-
-        if (needsUsername) {
-          setOpenUsernameModal(true);
-        }
       } catch (err) {
         console.error("Error during user check:", err);
       }
@@ -48,12 +43,10 @@ const VideoHero = () => {
       const video = videoRef.current;
 
       const onMetadataLoaded = () => {
-        console.log("Video metadata loaded");
         setIsVideoLoaded(true);
       };
 
       const onCanPlayThrough = () => {
-        console.log("Video can play through");
         setIsVideoLoaded(true);
       };
 
@@ -78,9 +71,7 @@ const VideoHero = () => {
           }
 
           await video.play();
-          console.log("Video playing successfully");
         } catch (err) {
-          console.log("Auto-play was prevented or video error:", err);
           // Show carousel instead if video fails
           setShowCarousel(true);
         }

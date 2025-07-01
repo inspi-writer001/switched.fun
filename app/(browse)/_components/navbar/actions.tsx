@@ -2,50 +2,37 @@
 
 import Link from "next/link";
 import { Clapperboard, Loader2 } from "lucide-react";
-import { UserButton, useUser } from "@civic/auth-web3/react";
+import { useUser } from "@civic/auth-web3/react";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
-import { createUser, getSelfById, updateUser } from "@/actions/user";
-import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { getSelf } from "@/lib/auth-service";
-import { checkOrCreateUser } from "@/actions/checkUser";
+import { useState } from "react";
 import GoLive from "./goLive";
+import { UpdateUserProfileModal } from "./update-profile-modal";
+import { useQuery } from "@tanstack/react-query";
+import { getSelf } from "@/lib/auth-service";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ProfileDropdown } from "./profile-dropdown";
 
 export const Actions = () => {
-  const [loading, setLoading] = useState(false); // for sign‑in button
-  const [submitting, setSubmitting] = useState(false); // for username form
+  const [loading, setLoading] = useState(false);
   const [openUsernameModal, setOpenUsernameModal] = useState(false);
-  const [username, setUsername] = useState(""); // input state
-  const { signIn, user } = useUser();
-  const [currentUser, setCurrentUser] = useState<any>(null); // your DB user
+  const { signIn } = useUser();
 
-  // // 👉 1️⃣ When Civic Auth user becomes available (sign‑in/sign‑up), run our check ONCE
-  useEffect(() => {
-    if (!user) return;
-
-    const run = async () => {
-      try {
-        const { user: me, needsUsername } = await checkOrCreateUser(user.id);
-        console.log("username", me);
-        setCurrentUser(me);
-
-        if (needsUsername) {
-          setOpenUsernameModal(true);
-        }
-      } catch (err) {
-        console.error("Error during user check:", err);
-      }
-    };
-
-    run();
-  }, [user]);
+  const {
+    data: currentUser,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: () => getSelf(),
+  });
 
   // 👉 2️⃣ Handle the "Login" button
   async function handleLogin() {
     setLoading(true);
     try {
       await signIn();
+      refetch();
     } catch (error) {
       console.error("Error signing in:", error);
     } finally {
@@ -53,31 +40,40 @@ export const Actions = () => {
     }
   }
 
-  // 👉 3️⃣ Handle submitting the username form
-  async function handleOnSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSubmitting(true);
-    try {
-      if (currentUser) {
-        await updateUser({ id: currentUser.id, username: username.trim().replaceAll(" ", "_") });
-      } else {
-        await createUser({
-          externalUserId: user!.id,
-          username: username.trim().replaceAll(" ", "_"),
-          imageUrl: user!.picture!,
-        });
-      }
-    } catch (err) {
-    } finally {
-      setSubmitting(false);
-      setOpenUsernameModal(false);
-    }
+  if (isLoading) {
+    return <Skeleton className="w-12 h-6" />;
+  }
+
+  if (isError) {
+    return (
+      <Button
+        onClick={handleLogin}
+        disabled={loading}
+        variant="default"
+        size="sm"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging in…
+          </>
+        ) : (
+          "Login"
+        )}
+      </Button>
+    );
   }
 
   return (
     <div className="flex items-center justify-end gap-x-2 ml-4 lg:ml-0">
-      {!!user && <GoLive user={currentUser} />}
-      {!!user && (
+      {!!currentUser && (
+        <GoLive
+          user={{
+            id: currentUser?.id ?? "",
+            username: currentUser?.username ?? "",
+          }}
+        />
+      )}
+      {!!currentUser && (
         <div className="flex items-center gap-x-4">
           <Button
             size="sm"
@@ -90,51 +86,27 @@ export const Actions = () => {
               <span className="hidden lg:block">Dashboard</span>
             </Link>
           </Button>
-          <UserButton />
+          <ProfileDropdown
+            currentUser={{
+              id: currentUser?.id ?? "",
+              username: currentUser?.username ?? "",
+              picture: currentUser?.imageUrl ?? "",
+            }}
+            refetch={refetch}
+          />
         </div>
       )}
 
-      {!user && (
-        <Button
-          onClick={handleLogin}
-          disabled={loading}
-          variant="default"
-          size="sm"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging in…
-            </>
-          ) : (
-            "Login"
-          )}
-        </Button>
-      )}
-
-      <Dialog onOpenChange={setOpenUsernameModal} open={openUsernameModal}>
-        <DialogClose />
-        <DialogContent>
-          <h1 className="text-center text-2xl font-bold">Choose a Username</h1>
-          <form className="py-4 px-2" onSubmit={handleOnSubmit}>
-            <Input
-              className="w-full"
-              type="text"
-              value={username}
-              onChange={(e) => {
-                console.log(
-                  "[Actions] Username input changed:",
-                  e.target.value
-                );
-                setUsername(e.target.value);
-              }}
-              placeholder="Choose a username…"
-            />
-            <Button type="submit" disabled={submitting}>
-              {submitting ? "Updating…" : "Update Username"}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <UpdateUserProfileModal
+        open={openUsernameModal}
+        setOpen={setOpenUsernameModal}
+        currentUser={{
+          id: currentUser?.id ?? "",
+          username: currentUser?.username ?? "",
+          picture: currentUser?.imageUrl ?? "",
+          interests: currentUser?.interests ?? [],
+        }}
+      />
     </div>
   );
 };

@@ -2,11 +2,11 @@ import { authMiddleware } from "@civic/auth-web3/nextjs/middleware";
 import { NextRequest, NextResponse } from "next/server";
 
 const publicRoutes = [
-  "/", 
-  "/api/webhooks", 
-  "/api/uploadthing", 
+  "/",
+  "/api/webhooks",
+  "/api/uploadthing",
   "/search",
-  "/api/auth" // Add auth routes
+  "/api/auth", // Add auth routes
 ];
 
 const withCivicAuth = authMiddleware();

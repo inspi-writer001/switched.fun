@@ -19,7 +19,6 @@ export default function CreateWallet() {
         try {
           // <-- now `createWallet` is guaranteed to exist
           await userContext.createWallet();
-          console.log("Wallet created successfully");
         } catch (error) {
           console.error("Error creating wallet:", error);
         }

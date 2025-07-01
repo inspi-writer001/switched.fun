@@ -33,7 +33,7 @@ export const InfoCard = ({
             <Pencil className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-sm lg:text-lg font-semibold capitalize">
+            <h2 className="text-sm lg:text-lg font-semibold capitalize font-serif">
               Edit your stream info
             </h2>
             <p className="text-muted-foreground text-xs lg:text-sm">
