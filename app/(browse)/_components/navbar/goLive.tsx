@@ -43,7 +43,6 @@ const GoLive = ({ user, size = "default" }: GoLiveProps) => {
         setError(null);
 
         const result = await getStreamData();
-        console.log("Stream data result:", result);
 
         if (result.error) {
           setError(result.error);

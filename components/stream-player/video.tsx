@@ -16,11 +16,13 @@ import { LiveVideo } from "./live-video";
 interface VideoProps {
   hostName: string;
   hostIdentity: string;
+  thumbnailUrl?: string | null;
 };
 
 export const Video = ({
   hostName,
   hostIdentity,
+  thumbnailUrl,
 }: VideoProps) => {
   const connectionState = useConnectionState();
   const participant = useRemoteParticipant(hostIdentity);
@@ -34,7 +36,8 @@ export const Video = ({
   if (!participant && connectionState === ConnectionState.Connected) {
     content = <OfflineVideo username={hostName} />;
   } else if (!participant || tracks.length === 0) {
-    content = <LoadingVideo label={connectionState} />
+    // content = <LoadingVideo label={connectionState} />
+    content = <OfflineVideo username={hostName} thumbnailUrl={thumbnailUrl} />
   } else {
     content = <LiveVideo participant={participant} />
   };

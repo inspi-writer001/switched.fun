@@ -36,14 +36,12 @@ async function main() {
   // Airdrop 2 SOL to cover fees (Devnet only)
   const sig = await connection.requestAirdrop(payer.publicKey, 2 * 1e9);
   await connection.confirmTransaction(sig);
-  console.log("✅ Airdropped 2 SOL to payer:", payer.publicKey.toBase58());
 
   // ── 3️⃣ Create or reuse the USDT-like mint ────────────────────
   // We store the mint address in .env so we can reuse it
   let mintPubkey: PublicKey;
   if (process.env.DEVNET_USDT_MINT) {
     mintPubkey = new PublicKey(process.env.DEVNET_USDT_MINT);
-    console.log("🔄 Reusing existing mint:", mintPubkey.toBase58());
   } else {
     const decimals = 6;
     mintPubkey = await createMint(
@@ -53,8 +51,6 @@ async function main() {
       null,
       decimals
     );
-    console.log("✅ Created new USDT-like mint:", mintPubkey.toBase58());
-    console.log("   ▶️  Add this to your .env as DEVNET_USDT_MINT");
   }
 
   // ── 4️⃣ Ensure payer ATA exists ───────────────────────────────
@@ -64,7 +60,6 @@ async function main() {
     mintPubkey,
     payer.publicKey
   );
-  console.log("👉 Payer ATA:", payerAta.address.toBase58());
 
   // ── 5️⃣ Mint tokens to payer ATA ─────────────────────────────
   const mintAmount = amount * 10 ** 6; // convert to smallest units
@@ -76,7 +71,6 @@ async function main() {
     payer.publicKey,
     mintAmount
   );
-  console.log(`✅ Minted ${amount} USDT to payer ATA`);
 
   // ── 6️⃣ Transfer tokens to recipient ─────────────────────────
   // Create recipient ATA if missing
@@ -86,7 +80,6 @@ async function main() {
     mintPubkey,
     recipientPubkey
   );
-  console.log("👉 Recipient ATA:", recipientAta.address.toBase58());
 
   const tx = await transfer(
     connection,
@@ -96,8 +89,6 @@ async function main() {
     payer.publicKey,
     mintAmount
   );
-  console.log(`✅ Transferred ${amount} USDT to ${recipientPubkey.toBase58()}`);
-  console.log("   Tx signature:", tx);
 }
 
 main().catch((err) => {

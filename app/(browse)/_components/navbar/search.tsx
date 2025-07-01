@@ -32,13 +32,13 @@ export const Search = () => {
   return (
     <form
       onSubmit={onSubmit}
-      className="relative w-full lg:w-[400px] flex items-center"
+      className="relative w-full lg:w-[400px] flex items-center border border-gray-900 rounded-md"
     >
       <Input
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Search"
-        className="rounded-r-none focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
+        className="rounded-r-none border-none focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
       />
       {value && (
         <X
@@ -50,7 +50,7 @@ export const Search = () => {
         type="submit"
         size="sm"
         variant="secondary"
-        className="rounded-l-none"
+        className="rounded-l-none bg-transparent hover:bg-transparent"
       >
         <SearchIcon className="h-5 w-5 text-muted-foreground" />
       </Button>

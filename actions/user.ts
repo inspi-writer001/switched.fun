@@ -19,6 +19,7 @@ const createUserSchema = z.object({
       "Username can only contain letters, numbers, and underscores"
     ),
   imageUrl: z.string().url("Invalid image URL"),
+  interests: z.array(z.string()).min(3, "At least 3 interests are required").max(8, "Maximum 8 interests allowed").optional(),
 });
 
 const updateUserSchema = z.object({
@@ -33,6 +34,7 @@ const updateUserSchema = z.object({
     )
     .optional(),
   bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
+  interests: z.array(z.string()).min(3, "At least 3 interests are required").max(8, "Maximum 8 interests allowed").optional(),
 });
 
 // Rate limiting helper
@@ -71,6 +73,7 @@ export const createUser = async (data: {
   externalUserId: string;
   username: string;
   imageUrl: string;
+  interests?: string[];
 }) => {
   try {
     // Validate input
@@ -92,7 +95,8 @@ export const createUser = async (data: {
 
     // Create user with transaction for atomicity
     const user = await db.$transaction(async (tx) => {
-      return tx.user.create({
+      // Create user first
+      const newUser = await tx.user.create({
         data: {
           externalUserId: validatedData.externalUserId,
           username: validatedData.username.toLowerCase(),
@@ -107,7 +111,35 @@ export const createUser = async (data: {
           stream: true,
         },
       });
+
+      // Create interests if provided
+      if (validatedData.interests && validatedData.interests.length > 0) {
+        await tx.userInterest.createMany({
+          data: validatedData.interests.map((subCategoryId: string) => ({
+            userId: newUser.id,
+            subCategoryId,
+          })),
+          skipDuplicates: true,
+        });
+      }
+
+      // Return user with interests
+      return tx.user.findUnique({
+        where: { id: newUser.id },
+        include: {
+          stream: true,
+          interests: {
+            include: {
+              subCategory: true,
+            },
+          },
+        },
+      });
     });
+
+    if (!user) {
+      throw new Error("Failed to create user");
+    }
 
     // Batch revalidate paths
     const pathsToRevalidate = [
@@ -142,6 +174,7 @@ export const updateUser = async (values: {
   id: string;
   username?: string;
   bio?: string;
+  interests?: string[];
 }) => {
   try {
     // Validate input
@@ -176,32 +209,67 @@ export const updateUser = async (values: {
       updateData.bio = validatedValues.bio;
     }
 
-    if (Object.keys(updateData).length === 0) {
-      return self;
-    }
-
-    // Use transaction for atomic update
+    // Use transaction for atomic update with timeout
     const updated = await db.$transaction(async (tx) => {
-      return tx.user.update({
-        where: { id: self.id },
-        data: updateData,
-        include: {
-          stream: true,
-          _count: {
-            select: {
-              followedBy: true,
-            },
+      // Update user basic info if needed
+      if (Object.keys(updateData).length > 0) {
+        await tx.user.update({
+          where: { id: self.id },
+          data: updateData,
+        });
+      }
+
+      // Handle interests update separately
+      if (validatedValues.interests !== undefined) {
+        // Delete existing interests first
+        await tx.userInterest.deleteMany({
+          where: { userId: self.id },
+        });
+
+        // Create new interests if any
+        if (validatedValues.interests.length > 0) {
+          await tx.userInterest.createMany({
+            data: validatedValues.interests.map((subCategoryId) => ({
+              userId: self.id,
+              subCategoryId,
+            })),
+            skipDuplicates: true,
+          });
+        }
+      }
+    }, {
+      maxWait: 5000, // 5 second timeout
+      timeout: 10000, // 10 second timeout
+    });
+
+    // Fetch the updated user after transaction completes
+    const updatedUser = await db.user.findUnique({
+      where: { id: self.id },
+      include: {
+        stream: true,
+        interests: {
+          include: {
+            subCategory: true,
           },
         },
-      });
+        _count: {
+          select: {
+            followedBy: true,
+          },
+        },
+      },
     });
+
+    if (!updatedUser) {
+      throw new Error("Failed to update user");
+    }
 
     // Batch cache invalidation and path revalidation
     const cacheInvalidations = [invalidateUserCache(self.id, self.username)];
 
     const pathsToRevalidate = [
-      `/u/${updated.username}`,
-      `/@${updated.username}`,
+      `/u/${updatedUser.username}`,
+      `/@${updatedUser.username}`,
     ];
 
     if (validatedValues.username) {
@@ -217,7 +285,7 @@ export const updateUser = async (values: {
       ...pathsToRevalidate.map((path) => revalidatePath(path)),
     ]);
 
-    return updated;
+    return updatedUser;
   } catch (err: any) {
     console.error("[updateUser] error:", err);
 

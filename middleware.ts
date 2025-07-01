@@ -1,6 +1,7 @@
 import { authMiddleware } from "@civic/auth-web3/nextjs/middleware";
 import { NextRequest, NextResponse } from "next/server";
 
+<<<<<<< HEAD
 const publicRoutes = [
   "/", 
   "/api/webhooks", 
@@ -8,17 +9,23 @@ const publicRoutes = [
   "/search",
   "/api/auth" // Add auth routes
 ];
+=======
+const publicRoutes = ["/", "/api/webhooks", "/api/uploadthing", "/search"];
+>>>>>>> 871db31 (feat: update)
 
 const withCivicAuth = authMiddleware();
 
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+<<<<<<< HEAD
   // Skip middleware for all API routes to avoid blocking webhooks
   if (pathname.startsWith("/api/")) {
     return NextResponse.next();
   }
 
+=======
+>>>>>>> 871db31 (feat: update)
   // Check if the route is public
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + "/")
@@ -47,6 +54,10 @@ export const config = {
      * - image files
      * - ALL api routes (to avoid blocking webhooks)
      */
+<<<<<<< HEAD
     "/((?!_next|favicon.ico|sitemap.xml|robots.txt|api/|.*.jpg|.*.png|.*.svg|.*.gif).*)",
+=======
+    "/((?!_next|favicon.ico|sitemap.xml|robots.txt|api/uploadthing|.*.jpg|.*.png|.*.svg|.*.gif).*)",
+>>>>>>> 871db31 (feat: update)
   ],
 };

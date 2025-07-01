@@ -74,6 +74,7 @@ export const StreamPlayer = ({
           <Video
             hostName={user.username}
             hostIdentity={user.id}
+            thumbnailUrl={stream.thumbnailUrl}
           />
           <Header
             hostName={user.username}

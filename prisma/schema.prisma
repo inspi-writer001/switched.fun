@@ -40,9 +40,11 @@ model Stream {
   streamStartedAt     DateTime?
   updatedAt           DateTime  @updatedAt
   user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  views               Int       @default(0)
 
   @@index([userId])
   @@index([ingressId])
+  @@index([views])
 }
 
 model PlatformAnalytics {
@@ -109,6 +111,11 @@ model Category {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   subCategories SubCategory[]
+
+  @@index([isActive])
+  @@index([name])
+  @@index([slug])
+  @@index([isActive, name])
 }
 
 model SubCategory {
@@ -128,6 +135,9 @@ model SubCategory {
   @@unique([categoryId, name])
   @@index([categoryId])
   @@index([slug])
+  @@index([isActive])
+  @@index([categoryId, isActive])
+  @@index([name])
 }
 
 model UserInterest {

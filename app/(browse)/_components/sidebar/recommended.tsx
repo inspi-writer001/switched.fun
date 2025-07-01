@@ -1,23 +1,25 @@
 "use client";
 
-import { User } from "@prisma/client";
-
 import { useSidebar } from "@/store/use-sidebar";
 
 import { UserItem, UserItemSkeleton } from "./user-item";
+import { useQuery } from "@tanstack/react-query";
+import { getRecommended } from "@/lib/recommended-service";
 
-interface RecommendedProps {
-  data: (User & {
-    stream: { isLive: boolean } | null;
-  })[];
-};
 
-export const Recommended = ({
-  data,
-}: RecommendedProps) => {
+export const Recommended = () => {
   const { collapsed } = useSidebar((state) => state);
 
-  const showLabel = !collapsed && data.length > 0;
+  const { data, isLoading } = useQuery({
+    queryKey: ["recommended"],
+    queryFn: () => getRecommended(),
+  });
+
+  const showLabel = !collapsed && data?.length && data.length > 0;
+
+  if (isLoading) {
+    return <RecommendedSkeleton />;
+  }
 
   return (
     <div>
@@ -29,7 +31,7 @@ export const Recommended = ({
         </div>
       )}
       <ul className="space-y-2 px-2">
-        {data.map((user) => (
+        {data?.map((user) => (
           <UserItem
             key={user.id}
             username={user.username}
