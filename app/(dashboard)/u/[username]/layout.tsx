@@ -6,7 +6,7 @@ import { Navbar } from "./_components/navbar";
 import { Sidebar } from "./_components/sidebar";
 import { Container } from "./_components/container";
 import { Metadata } from "next";
-import { getUserByUsername } from "@/lib/user-service";
+import { getUserByUsernameFromApi } from "@/lib/user-service";
 
 interface CreatorLayoutProps {
   params: { username: string };
@@ -18,7 +18,7 @@ export async function generateMetadata({
 }: {
   params: { username: string };
 }): Promise<Metadata> {
-  const user = await getUserByUsername(params.username);
+  const user = await getUserByUsernameFromApi(params.username);
 
   if (!user) {
     return {

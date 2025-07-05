@@ -7,10 +7,9 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import GoLive from "./goLive";
 import { UpdateUserProfileModal } from "./update-profile-modal";
-import { useQuery } from "@tanstack/react-query";
-import { getSelf } from "@/lib/auth-service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileDropdown } from "./profile-dropdown";
+import { useSelf } from "@/hooks/use-self";
 
 export const Actions = () => {
   const [loading, setLoading] = useState(false);
@@ -22,10 +21,7 @@ export const Actions = () => {
     isLoading,
     isError,
     refetch,
-  } = useQuery({
-    queryKey: ["currentUser"],
-    queryFn: () => getSelf(),
-  });
+  } = useSelf();
 
   // 👉 2️⃣ Handle the "Login" button
   async function handleLogin() {
@@ -51,6 +47,7 @@ export const Actions = () => {
         disabled={loading}
         variant="default"
         size="sm"
+        className="px-8"
       >
         {loading ? (
           <>
@@ -64,7 +61,7 @@ export const Actions = () => {
   }
 
   return (
-    <div className="flex items-center justify-end gap-x-2 ml-4 lg:ml-0">
+    <div className="flex items-center justify-end gap-x-6 ml-4 lg:ml-0">
       {!!currentUser && (
         <GoLive
           user={{
@@ -75,17 +72,6 @@ export const Actions = () => {
       )}
       {!!currentUser && (
         <div className="flex items-center gap-x-4">
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-muted-foreground hover:text-primary"
-            asChild
-          >
-            <Link href={`/u/${currentUser?.username ?? ""}`}>
-              <Clapperboard className="h-5 w-5 lg:mr-2" />
-              <span className="hidden lg:block">Dashboard</span>
-            </Link>
-          </Button>
           <ProfileDropdown
             currentUser={{
               id: currentUser?.id ?? "",

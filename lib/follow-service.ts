@@ -1,9 +1,9 @@
 import { db } from "@/lib/db";
-import { getSelf } from "@/lib/auth-service";
+import { getSelfFromApi } from "@/lib/auth-service";
 
 export const getFollowedUsers = async () => {
   try {
-    const self = await getSelf();
+    const self = await getSelfFromApi();
 
     const followedUsers = db.follow.findMany({
       where: {
@@ -49,7 +49,7 @@ export const getFollowedUsers = async () => {
 
 export const isFollowingUser = async (id: string) => {
   try {
-    const self = await getSelf();
+    const self = await getSelfFromApi();
 
     const otherUser = await db.user.findUnique({
       where: { id },
@@ -77,7 +77,7 @@ export const isFollowingUser = async (id: string) => {
 };
 
 export const followUser = async (id: string) => {
-  const self = await getSelf();
+  const self = await getSelfFromApi();
 
   const otherUser = await db.user.findUnique({
     where: { id },
@@ -117,7 +117,7 @@ export const followUser = async (id: string) => {
 };
 
 export const unfollowUser = async (id: string) => {
-  const self = await getSelf();
+  const self = await getSelfFromApi();
 
   const otherUser = await db.user.findUnique({
     where: {
@@ -154,4 +154,34 @@ export const unfollowUser = async (id: string) => {
   });
 
   return follow;
+};
+
+export const getFollowingFromApi = async () => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const url = baseUrl ? `${baseUrl}/api/follow/following` : '/api/follow/following';
+  
+  const response = await fetch(url, {
+    cache: 'no-store'
+  });
+  
+  if (!response.ok) {
+    throw new Error("Failed to fetch following");
+  }
+  
+  return response.json();
+};
+
+export const checkFollowStatusFromApi = async (userId: string) => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const url = baseUrl ? `${baseUrl}/api/follow/check/${userId}` : `/api/follow/check/${userId}`;
+  
+  const response = await fetch(url, {
+    cache: 'no-store'
+  });
+  
+  if (!response.ok) {
+    throw new Error("Failed to check follow status");
+  }
+  
+  return response.json();
 };

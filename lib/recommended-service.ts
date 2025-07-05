@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { getSelf } from "@/lib/auth-service";
+import { getSelfFromApi } from "@/lib/auth-service";
 
 // Cache recommendations for 30 seconds to reduce DB load
 const CACHE_TTL = 30 * 1000;
@@ -9,7 +9,7 @@ export const getRecommended = async () => {
   let userId: string | null = null;
 
   try {
-    const self = await getSelf();
+    const self = await getSelfFromApi();
     userId = self.id;
   } catch {
     userId = null;
@@ -208,3 +208,18 @@ if (typeof setInterval !== "undefined") {
     }
   }, 5 * 60 * 1000);
 }
+
+export const getRecommendedFromApi = async () => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const url = baseUrl ? `${baseUrl}/api/recommended` : '/api/recommended';
+  
+  const response = await fetch(url, {
+    cache: 'no-store'
+  });
+  
+  if (!response.ok) {
+    throw new Error("Failed to fetch recommended");
+  }
+  
+  return response.json();
+};

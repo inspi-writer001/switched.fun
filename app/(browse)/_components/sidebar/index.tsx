@@ -1,27 +1,23 @@
-import { getFollowedUsers } from "@/lib/follow-service";
-import { getRecommended } from "@/lib/recommended-service";
+import { getFollowingFromApi } from "@/lib/follow-service";
+import { getRecommendedFromApi } from "@/lib/recommended-service";
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 
 import { Wrapper } from "./wrapper";
-import { Following, FollowingSkeleton } from "./following";
 import { Toggle, ToggleSkeleton } from "./toggle";
+import { Following, FollowingSkeleton } from "./following";
 import { Recommended, RecommendedSkeleton } from "./recommended";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
 
 export const Sidebar = async () => {
   const queryClient = new QueryClient();
 
   await queryClient.prefetchQuery({
-    queryKey: ["recommended"],
-    queryFn: () => getRecommended(),
+    queryKey: ["following"],
+    queryFn: () => getFollowingFromApi(),
   });
 
   await queryClient.prefetchQuery({
-    queryKey: ["followers"],
-    queryFn: () => getFollowedUsers(),
+    queryKey: ["recommended"],
+    queryFn: () => getRecommendedFromApi(),
   });
 
   const dehydratedState = dehydrate(queryClient);

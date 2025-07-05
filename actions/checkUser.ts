@@ -1,8 +1,7 @@
 // app/actions/checkUser.ts
 "use server";
 
-import { getSelf } from "@/lib/auth-service";
-import { getUserById } from "@/lib/user-service";
+import { getUserByIdFromApi } from "@/lib/user-service";
 
 export type CheckUserResult = {
   user: { id: string; username?: string } | null;
@@ -17,7 +16,7 @@ export type CheckUserResult = {
 
 export async function checkOrCreateUser(id: string): Promise<CheckUserResult> {
   try {
-    const me = await getUserById(id);
+    const me = await getUserByIdFromApi(id);
 
     return {
       user: { id: me.id, username: me.username },

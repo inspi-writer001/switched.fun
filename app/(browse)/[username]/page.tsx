@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { getUserByUsername } from "@/lib/user-service";
-import { isFollowingUser } from "@/lib/follow-service";
+import { checkFollowStatusFromApi } from "@/lib/follow-service";
 import { isBlockedByUser } from "@/lib/block-service";
 import { StreamPlayer } from "@/components/stream-player";
 import { getCachedData } from "@/lib/cache";
@@ -21,7 +21,7 @@ const UserPage = async ({
     notFound();
   }
   
-  const isFollowing = await isFollowingUser(user.id);
+  const isFollowing = await checkFollowStatusFromApi(user.id);
   const isBlocked = await isBlockedByUser(user.id);
 
   if (isBlocked) {

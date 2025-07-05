@@ -1,11 +1,11 @@
 import { db } from "@/lib/db";
-import { getSelf } from "@/lib/auth-service";
+import { getSelfFromApi } from "@/lib/auth-service";
 
 export const getSearch = async (term?: string) => {
   let userId;
 
   try {
-    const self = await getSelf();
+    const self = await getSelfFromApi();
     userId = self.id;
   } catch {
     userId = null;
@@ -120,3 +120,18 @@ export const getSearch = async (term?: string) => {
 
   return users;
 };
+export const searchFromApi = async (term: string) => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const url = baseUrl ? `${baseUrl}/api/search?q=${encodeURIComponent(term)}` : `/api/search?q=${encodeURIComponent(term)}`;
+  
+  const response = await fetch(url, {
+    cache: 'no-store'
+  });
+  
+  if (!response.ok) {
+    throw new Error("Failed to search");
+  }
+  
+  return response.json();
+};
+

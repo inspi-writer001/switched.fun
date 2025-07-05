@@ -95,3 +95,33 @@ export const invalidateUserCache = async (userId: string, username: string) => {
     invalidateCache(`user:username:${username.toLowerCase()}`),
   ]);
 };
+
+export const getUserByUsernameFromApi = async (username: string) => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const url = baseUrl ? `${baseUrl}/api/user/${encodeURIComponent(username)}` : `/api/user/${encodeURIComponent(username)}`;
+  
+  const response = await fetch(url, {
+    cache: 'no-store'
+  });
+  
+  if (!response.ok) {
+    throw new Error("Failed to fetch user");
+  }
+  
+  return response.json();
+};
+
+export const getUserByIdFromApi = async (id: string) => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const url = baseUrl ? `${baseUrl}/api/user/${id}` : `/api/user/${id}`;
+  
+  const response = await fetch(url, {
+    cache: 'no-store'
+  });
+  
+  if (!response.ok) {
+    throw new Error("Failed to fetch user");
+  }
+  
+  return response.json();
+};

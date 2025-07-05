@@ -5,8 +5,7 @@ import { Follow, User } from "@prisma/client";
 import { useSidebar } from "@/store/use-sidebar";
 
 import { UserItem, UserItemSkeleton } from "./user-item";
-import { getFollowedUsers } from "@/lib/follow-service";
-import { useQuery } from "@tanstack/react-query";
+import { useFollowedUsers } from "@/hooks/use-followed-users";
 
 // interface FollowingProps {
 //   data: (Follow & { 
@@ -19,10 +18,7 @@ import { useQuery } from "@tanstack/react-query";
 export const Following = () => {
   const { collapsed } = useSidebar((state) => state);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["followers"],
-    queryFn: () => getFollowedUsers(),
-  });
+  const { data, isLoading } = useFollowedUsers();
 
   if (isLoading) {
     return <FollowingSkeleton />;

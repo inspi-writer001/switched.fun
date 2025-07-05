@@ -1,28 +1,50 @@
-import { getSearch } from "@/lib/search-service";
-import { Skeleton } from "@/components/ui/skeleton";
+'use client';
 
+import { useSearch } from "@/hooks/use-search";
 import { ResultCard, ResultCardSkeleton } from "./result-card";
+import { SearchError } from "./search-error";
+import { SearchEmpty } from "./search-empty";
 
 interface ResultsProps {
   term?: string;
 }
 
-export const Results = async ({ term }: ResultsProps) => {
-  const data = await getSearch(term);
+export const Results = ({ term }: ResultsProps) => {
+  const { data, isLoading, error, refetch } = useSearch(term || '');
+
+  if (!term) {
+    return null;
+  }
+
+  if (isLoading) {
+    return (
+      <div>
+        <div className="h-8 w-[290px] mb-4 bg-muted animate-pulse rounded" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <ResultCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return <SearchError error={error as Error} onRetry={() => refetch()} />;
+  }
+
+  if (!data || data.length === 0) {
+    return <SearchEmpty term={term} />;
+  }
 
   return (
     <div>
-      <h2 className="text-lg font-semibold mb-4">
-        Results for &quot;{term}&quot;
+      <h2 className="text-lg font-semibold mb-4 font-sans">
+        Results for &quot;{term}&quot; ({data.length})
       </h2>
-      {data.length === 0 && (
-        <p className="text-muted-foreground text-sm">
-          No users found. Try searching for something else
-        </p>
-      )}
-      <div className="flex flex-col gap-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
         {data.map((result) => (
-          <ResultCard data={result} key={result.id} />
+          <ResultCard key={result.id} data={result} />
         ))}
       </div>
     </div>
@@ -32,8 +54,8 @@ export const Results = async ({ term }: ResultsProps) => {
 export const ResultsSkeleton = () => {
   return (
     <div>
-      <Skeleton className="h-8 w-[290px] mb-4" />
-      <div className="flex flex-col gap-y-4">
+      <div className="h-8 w-[290px] mb-4 bg-muted animate-pulse rounded" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
         {[...Array(4)].map((_, i) => (
           <ResultCardSkeleton key={i} />
         ))}

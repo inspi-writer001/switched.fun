@@ -3,17 +3,13 @@
 import { useSidebar } from "@/store/use-sidebar";
 
 import { UserItem, UserItemSkeleton } from "./user-item";
-import { useQuery } from "@tanstack/react-query";
-import { getRecommended } from "@/lib/recommended-service";
+import { useRecommended } from "@/hooks/use-recommended";
 
 
 export const Recommended = () => {
   const { collapsed } = useSidebar((state) => state);
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["recommended"],
-    queryFn: () => getRecommended(),
-  });
+  const { data, isLoading } = useRecommended();
 
   const showLabel = !collapsed && data?.length && data.length > 0;
 
