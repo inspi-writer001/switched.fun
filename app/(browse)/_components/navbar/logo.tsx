@@ -11,7 +11,7 @@ const font = Poppins({
 export const Logo = () => {
   return (
     <Link href="/">
-      <div className="flex items-center gap-x-4 hover:opacity-75 transition">
+      <div className="flex items-center gap-x-2 hover:opacity-75 transition">
         <div className="p-1 mr-12 shrink-0 lg:mr-0 lg:shrink">
           <Image
             src="/image/switched-logo.svg"
@@ -22,10 +22,7 @@ export const Logo = () => {
           />
         </div>
         <div className={cn("hidden lg:block", font.className)}>
-          <p className="text-lg font-semibold">Switched.fun</p>
-          <p className="text-xs text-muted-foreground">
-            Be rewarded for streams
-          </p>
+          <p className="text-lg font-regular">Switched.fun</p>
         </div>
       </div>
     </Link>

@@ -1,6 +1,6 @@
 import { getUser } from "@civic/auth-web3/nextjs";
 
-import { getUserByUsername } from "@/lib/user-service";
+import { getUserByUsernameFromApi } from "@/lib/user-service";
 import { StreamPlayer } from "@/components/stream-player";
 import { redirect } from "next/navigation";
 
@@ -22,7 +22,7 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
 
   const externalUser = await getUser();
 
-  const user = await getUserByUsername(username);
+  const user = await getUserByUsernameFromApi(username);
 
   if (user?.externalUserId !== externalUser?.id || !user?.stream) {
     redirect("/");

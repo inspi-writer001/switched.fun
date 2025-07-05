@@ -1,0 +1,402 @@
+---
+alwaysApply: true
+---
+## Project Overview
+This is a Next.js 14 streaming platform with Civic authentication, Solana blockchain integration, and TanStack Query for data management.
+
+## Core Technologies
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript (strict mode)
+- **Styling**: Tailwind CSS with Shadcn UI components
+- **State Management**: TanStack Query v5, Zustand
+- **Authentication**: Civic Auth Web3
+- **Database**: Prisma with PostgreSQL
+- **Caching**: Redis (Upstash)
+- **Blockchain**: Solana (Anchor framework)
+- **Live Streaming**: LiveKit
+- **File Upload**: UploadThing
+
+## Code Style & Conventions
+
+### TypeScript
+- Use strict TypeScript configuration
+- Prefer interfaces over types for object shapes
+- Use descriptive type names with PascalCase
+- Avoid `any` - use proper typing or `unknown`
+- Use utility types like `Partial<T>`, `Pick<T>`, `Omit<T>`
+
+### File Naming & Organization
+- Use kebab-case for directories: `components/auth-wizard/`
+- Use PascalCase for component files: `UserProfile.tsx`
+- Use camelCase for utility files: `authService.ts`
+- Group related files in `_components/` folders within route directories
+- Place shared components in `components/ui/` (Shadcn) or `components/` (custom)
+
+### Component Structure
+```typescript
+// 1. Imports (external, then internal)
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { useUser } from "@/hooks/use-user"
+
+// 2. Interfaces/Types
+interface ComponentProps {
+  userId: string
+  onSuccess?: () => void
+}
+
+// 3. Main Component (use function keyword)
+export function Component({ userId, onSuccess }: ComponentProps) {
+  // 4. Hooks
+  const { data: user } = useUser(userId)
+  
+  // 5. Event handlers
+  const handleClick = () => {
+    // Implementation
+  }
+  
+  // 6. Render
+  return (
+    <div>
+      {/* JSX */}
+    </div>
+  )
+}
+
+// 7. Sub-components (if any)
+function SubComponent() {
+  return <div />
+}
+
+// 8. Static content (if any)
+const STATIC_CONTENT = {
+  title: "Component Title"
+}
+```
+
+## Data Fetching Patterns
+
+### TanStack Query Hooks
+- Use consistent naming: `use[Resource][Action]` (e.g., `useUserById`, `useCategories`)
+- Include proper error handling and retry logic
+- Use appropriate stale times and cache times
+- Implement proper TypeScript interfaces for all data
+
+```typescript
+export function useUserById(id: string) {
+  return useQuery({
+    queryKey: ["user", "id", id],
+    queryFn: async (): Promise<User> => {
+      const response = await fetch(`/api/user/${id}`)
+      if (!response.ok) {
+        throw new Error("Failed to fetch user")
+      }
+      return response.json()
+    },
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error) => {
+      // Don't retry on 404 errors
+      if (error instanceof Error && error.message.includes("User not found")) {
+        return false
+      }
+      return failureCount < 3
+    },
+  })
+}
+```
+
+### Server Actions
+- Use "use server" directive at the top
+- Implement proper error handling with user-friendly messages
+- Use Zod for input validation
+- Return consistent response formats
+- Use revalidatePath for cache invalidation
+
+```typescript
+"use server"
+
+import { z } from "zod"
+import { revalidatePath } from "next/cache"
+
+const schema = z.object({
+  username: z.string().min(3).max(20)
+})
+
+export async function updateUser(data: z.infer<typeof schema>) {
+  try {
+    const validated = schema.parse(data)
+    // Implementation
+    revalidatePath(`/u/${validated.username}`)
+    return { success: true, data: result }
+  } catch (err: any) {
+    if (err instanceof z.ZodError) {
+      throw new Error(err.errors[0]?.message || "Invalid input")
+    }
+    throw new Error(err.message || "Failed to update user")
+  }
+}
+```
+
+## Error Handling
+
+### Client-Side Errors
+- Use error boundaries for unexpected errors
+- Implement proper error states in components
+- Show user-friendly error messages
+- Provide retry mechanisms where appropriate
+
+### Server-Side Errors
+- Log errors with context: `console.error("[actionName] error:", err)`
+- Return user-friendly error messages
+- Use proper HTTP status codes in API routes
+- Implement rate limiting for sensitive operations
+
+### Error Boundary Pattern
+```typescript
+// app/error.tsx
+"use client"
+
+export default function ErrorPage() {
+  return (
+    <div className="h-full flex flex-col space-y-4 items-center justify-center text-muted-foreground">
+      <p>Something went wrong</p>
+      <Button variant="secondary" asChild>
+        <Link href="/">Go back home</Link>
+      </Button>
+    </div>
+  )
+}
+```
+
+## Performance Optimizations
+
+### Component Optimization
+- Use `React.memo` for expensive components
+- Implement proper `useCallback` and `useMemo` hooks
+- Use dynamic imports for large components: `const HeavyComponent = dynamic(() => import('./HeavyComponent'))`
+- Implement virtualization for large lists using `@tanstack/react-virtual`
+
+### Data Fetching Optimization
+- Use appropriate stale times to reduce unnecessary requests
+- Implement proper cache invalidation strategies
+- Use optimistic updates for better UX
+- Prefetch data when possible
+
+### Image Optimization
+- Use Next.js `Image` component with proper sizing
+- Implement lazy loading for non-critical images
+- Use WebP format when possible
+- Provide proper fallbacks
+
+## Authentication & Authorization
+
+### Civic Auth Integration
+- Use `@civic/auth-web3` for authentication
+- Implement proper auth guards in server actions
+- Handle auth errors gracefully
+- Use proper user context throughout the app
+
+### Authorization Patterns
+```typescript
+// lib/auth-service.ts
+export const getSelf = async () => {
+  const self = await getUser()
+  if (!self?.id) {
+    throw new Error("Unauthorized")
+  }
+  // Additional validation
+  return user
+}
+```
+
+## Database & Caching
+
+### Prisma Patterns
+- Use proper include/exclude patterns for queries
+- Implement efficient pagination
+- Use transactions for complex operations
+- Handle database errors gracefully
+
+### Redis Caching
+- Use consistent cache key patterns: `resource:type:identifier`
+- Implement proper TTL values
+- Use the `getCachedData` helper function
+- Handle cache misses gracefully
+
+```typescript
+const user = await getCachedData({
+  key: `user:username:${username}`,
+  ttl: 300, // 5 minutes
+  fetchFn: async () => {
+    return db.user.findFirst({
+      where: { username: { equals: username, mode: "insensitive" } }
+    })
+  }
+})
+```
+
+## Blockchain Integration
+
+### Solana Patterns
+- Use Anchor framework for program interactions
+- Implement proper error handling for blockchain operations
+- Use retry logic for RPC calls
+- Handle wallet connection states properly
+
+### Error Handling for Blockchain
+```typescript
+async function retryOn429<T>(
+  fn: () => Promise<T>,
+  retries = 3,
+  delay = 500
+): Promise<T> {
+  try {
+    return await fn()
+  } catch (err: any) {
+    if (retries > 0 && err?.error?.code === 429) {
+      await sleep(delay)
+      return retryOn429(fn, retries - 1, delay * 2)
+    }
+    throw err
+  }
+}
+```
+
+## UI/UX Patterns
+
+### Shadcn UI Components
+- Use Shadcn UI components as the primary UI library
+- Extend components when needed rather than creating from scratch
+- Maintain consistent spacing and sizing
+- Use proper semantic HTML elements
+
+### Responsive Design
+- Use mobile-first approach with Tailwind breakpoints
+- Implement proper responsive layouts
+- Test on multiple screen sizes
+- Use proper touch targets for mobile
+
+### Loading States
+- Implement skeleton components for loading states
+- Use proper loading indicators
+- Show optimistic UI when possible
+- Handle loading errors gracefully
+
+## Testing & Quality
+
+### Code Quality
+- Use ESLint with Next.js configuration
+- Implement proper TypeScript strict mode
+- Use Prettier for consistent formatting
+- Write self-documenting code with clear variable names
+
+### Performance Monitoring
+- Monitor Core Web Vitals
+- Use proper error tracking
+- Implement performance budgets
+- Monitor bundle sizes
+
+## Environment & Configuration
+
+### Environment Variables
+- Use proper environment variable naming: `NEXT_PUBLIC_` for client-side
+- Validate environment variables at startup
+- Use proper fallbacks for optional variables
+- Document required environment variables
+
+### Configuration Files
+- Use `next.config.mjs` for Next.js configuration
+- Maintain proper TypeScript configuration
+- Use consistent path aliases: `@/*` for root imports
+- Keep configuration files clean and well-documented
+
+## Git & Collaboration
+
+### Commit Messages
+- Use conventional commit format
+- Write descriptive commit messages
+- Reference issues when applicable
+- Keep commits focused and atomic
+
+### Code Review
+- Review for performance implications
+- Check for proper error handling
+- Ensure TypeScript types are correct
+- Verify accessibility standards
+
+## Security Best Practices
+
+### Input Validation
+- Always validate user inputs with Zod
+- Sanitize data before database operations
+- Implement proper rate limiting
+- Use parameterized queries (Prisma handles this)
+
+### Authentication Security
+- Never expose sensitive data to the client
+- Implement proper session management
+- Use secure cookie settings
+- Validate user permissions on every request
+
+## Documentation
+
+### Code Documentation
+- Write clear JSDoc comments for complex functions
+- Document complex business logic
+- Keep README files updated
+- Document API endpoints and their responses
+
+### Architecture Decisions
+- Document major architectural decisions
+- Keep performance optimization notes
+- Document known limitations and workarounds
+- Maintain troubleshooting guides
+
+## Common Patterns to Follow
+
+### Hook Patterns
+```typescript
+// Custom hooks should follow this pattern
+export function use[Resource](params, options = {}) {
+  const { enabled = true, staleTime = 5 * 60 * 1000 } = options
+  
+  return useQuery({
+    queryKey: ["resource", params],
+    queryFn: async () => {
+      // Implementation
+    },
+    enabled,
+    staleTime,
+    // Other options
+  })
+}
+```
+
+### Service Layer Patterns
+```typescript
+// Services should be in lib/ directory
+export async function serviceFunction(params) {
+  try {
+    // Implementation with proper error handling
+    return result
+  } catch (error) {
+    console.error("[serviceFunction] error:", error)
+    throw new Error("User-friendly error message")
+  }
+}
+```
+
+### Component Export Patterns
+```typescript
+// Named exports for components
+export { Component }
+export { ComponentSkeleton }
+export { ComponentError }
+
+// Default export for main component
+export default Component
+```
+
+Remember: Consistency is key. When in doubt, follow the existing patterns in the codebase rather than introducing new ones.

@@ -1,4 +1,3 @@
-import { getStreams } from "@/lib/feed-service";
 import { Results } from "../(home)/_components/results";
 
 const ExplorePage = async () => {

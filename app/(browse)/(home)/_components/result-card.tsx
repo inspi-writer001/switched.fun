@@ -1,5 +1,5 @@
+import React, { memo } from "react";
 import Link from "next/link";
-import { Stream, User } from "@prisma/client";
 
 import { Thumbnail, ThumbnailSkeleton } from "@/components/thumbnail";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,17 +8,24 @@ import { UserAvatar, UserAvatarSkeleton } from "@/components/user-avatar";
 
 interface ResultCardProps {
   data: {
-    user: User;
+    id: string;
+    user: {
+      id: string;
+      username: string;
+      imageUrl: string;
+      bio: string | null;
+    };
     isLive: boolean;
     name: string;
     thumbnailUrl: string | null;
+    updatedAt: string;
   };
 }
 
-export const ResultCard = ({ data }: ResultCardProps) => {
+export const ResultCard = memo(({ data }: ResultCardProps) => {
   return (
-    <Link href={`/${data.user.username}`}>
-      <div className="h-full w-full space-y-4">
+    <Link href={`/${data.user.username}`} className="block h-full">
+      <div className="h-full w-full space-y-4 group">
         <Thumbnail
           src={data.thumbnailUrl}
           fallback={data.user.imageUrl}
@@ -32,17 +39,19 @@ export const ResultCard = ({ data }: ResultCardProps) => {
             imageUrl={data.user.imageUrl}
             isLive={data.isLive}
           />
-          <div className="flex flex-col text-sm overflow-hidden">
-            <p className="truncate font-semibold hover:text-blue-500">
+          <div className="flex flex-col text-sm overflow-hidden flex-1 min-w-0">
+            <p className="truncate font-semibold group-hover:text-blue-500 transition-colors">
               {data.name}
             </p>
-            <p className="text-muted-foreground">{data.user.username}</p>
+            <p className="text-muted-foreground truncate">{data.user.username}</p>
           </div>
         </div>
       </div>
     </Link>
   );
-};
+});
+
+ResultCard.displayName = "ResultCard";
 
 export const ResultCardSkeleton = () => {
   return (
@@ -50,7 +59,7 @@ export const ResultCardSkeleton = () => {
       <ThumbnailSkeleton />
       <div className="flex gap-x-3">
         <UserAvatarSkeleton />
-        <div className="flex flex-col gap-y-1">
+        <div className="flex flex-col gap-y-1 flex-1">
           <Skeleton className="h-4 w-32" />
           <Skeleton className="h-3 w-24" />
         </div>

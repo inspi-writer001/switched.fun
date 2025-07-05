@@ -1,7 +1,7 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 
 import { db } from "@/lib/db";
-import { getSelf } from "@/lib/auth-service";
+import { getSelfFromApi } from "@/lib/auth-service";
  
 const f = createUploadthing();
  
@@ -13,7 +13,7 @@ export const ourFileRouter = {
     } 
   })
     .middleware(async () => {
-      const self = await getSelf();
+      const self = await getSelfFromApi();
 
       return { user: self }
     })

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { getSelf } from "@/lib/auth-service";
+import { getSelfFromApi } from "@/lib/auth-service";
 import { invalidateUserCache } from "@/lib/user-service";
 import { getCachedData } from "@/lib/redis";
 
@@ -181,7 +181,7 @@ export const updateUser = async (values: {
     const validatedValues = updateUserSchema.parse(values);
 
     // Get current user and apply rate limiting
-    const self = await getSelf();
+    const self = await getSelfFromApi();
     await checkRateLimit(self.id, "update_user", 10, 300); // 10 updates per 5 minutes
 
     const updateData: { username?: string; bio?: string } = {};
@@ -297,36 +297,4 @@ export const updateUser = async (values: {
   }
 };
 
-// ————————————————
-// Fetch the DB user by their external (Civic) ID with caching
-// ————————————————
-export const getSelfById = async (externalUserId: string) => {
-  try {
-    // Validate input
-    if (!externalUserId || typeof externalUserId !== "string") {
-      throw new Error("Invalid external user ID");
-    }
 
-    const user = await getCachedData({
-      key: `user:external:${externalUserId}`,
-      ttl: 300, // 5 minutes
-      fetchFn: async () => {
-        return db.user.findUnique({
-          where: { externalUserId },
-          include: {
-            stream: true,
-          },
-        });
-      },
-    });
-
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    return user;
-  } catch (err: any) {
-    console.error("[getSelfById] error:", err);
-    throw new Error(err.message || "Failed to fetch user");
-  }
-};

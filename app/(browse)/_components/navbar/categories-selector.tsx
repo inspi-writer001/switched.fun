@@ -1,24 +1,10 @@
 "use client";
 
-import { getCategories } from "@/actions/categories";
+import { useCategories } from "@/hooks/use-categories";
 import { Loader2, X, AlertCircle, CheckCircle } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { cn } from "@/lib/utils";
-
-interface CategoryWithSubCategories {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  viewers: number;
-  subCategories: {
-    id: string;
-    name: string;
-    slug: string;
-    description: string | null;
-    viewers: number;
-  }[];
-}
+import type { CategoryWithSubCategories } from "@/types/category";
 
 interface CategoriesSelectorProps {
   selectedInterests: string[];
@@ -34,29 +20,10 @@ export const CategoriesSelector = ({
   setSelectedInterests,
   open,
 }: CategoriesSelectorProps) => {
-  const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<CategoryWithSubCategories[]>([]);
-
-  const fetchCategories = async () => {
-    setLoading(true);
-    try {
-      const result = await getCategories(false);
-      if (result.success && result.data) {
-        setCategories(result.data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch categories when modal opens
-  useEffect(() => {
-    if (open) {
-      fetchCategories();
-    }
-  }, [open]);
+  const { data: categories, isLoading: loading, error } = useCategories({
+    enabled: open,
+    includeInactive: false,
+  });
 
   const handleSubCategoryToggle = (subCategoryId: string) => {
     setSelectedInterests((prev) => {
@@ -82,7 +49,7 @@ export const CategoriesSelector = ({
   const getSelectedSubCategoryNames = () => {
     const selectedNames: { id: string; name: string; categoryName: string }[] =
       [];
-    categories.forEach((category) => {
+    categories?.forEach((category) => {
       category.subCategories.forEach((subCategory) => {
         if (selectedInterests.includes(subCategory.id)) {
           selectedNames.push({
@@ -167,7 +134,7 @@ export const CategoriesSelector = ({
 
       {/* Categories and SubCategories */}
       <div className="flex flex-col mt-4 gap-y-4 max-h-[400px] overflow-y-auto">
-        {categories.map((category) => (
+        {categories?.map((category) => (
           <div key={category.id} className="flex flex-col gap-y-2">
             <h5 className="text-xs font-medium font-sans text-muted-foreground uppercase tracking-wide">
               {category.name}
@@ -211,7 +178,7 @@ export const CategoriesSelector = ({
       </div>
 
       {/* Summary */}
-      {categories.length === 0 && !loading && (
+      {(!categories || categories.length === 0) && !loading && (
         <div className="text-center py-8 text-muted-foreground">
           <p className="text-sm">No categories available</p>
         </div>

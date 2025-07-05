@@ -7,13 +7,6 @@ import { db } from "@/lib/db";
 // 1. STRICTLY AUTHENTICATED: throws if not logged in or wallet missing
 //
 export const getSelf = async () => {
-  // const cookieStore = cookies(); // ❗ Only safe to use in server functions
-  // const token = cookieStore.get("authToken")?.value;
-
-  // if (!token) {
-  //   throw new Error("No authentication cookie found");
-  // }
-
   let self;
   try {
     self = await getUser();
@@ -92,4 +85,49 @@ export const getSelfByUsername = async (username: string) => {
   }
 
   return user;
+};
+
+export const getSelfFromApi = async () => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const url = baseUrl ? `${baseUrl}/api/user/me` : '/api/user/me';
+  
+  const response = await fetch(url, {
+    cache: 'no-store'
+  });
+  
+  if (!response.ok) {
+    throw new Error("Failed to fetch user");
+  }
+  
+  return response.json();
+};
+
+export const getSelfByUsernameFromApi = async (username: string) => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const url = baseUrl ? `${baseUrl}/api/user/${username}` : `/api/user/${username}`;
+  
+  const response = await fetch(url, {
+    cache: 'no-store'
+  });
+  
+  if (!response.ok) {
+    throw new Error("Failed to fetch user");
+  }
+  
+  return response.json();
+};
+
+export const getPublicUserByUsernameFromApi = async (username: string) => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+  const url = baseUrl ? `${baseUrl}/api/user/public/${username}` : `/api/user/public/${username}`;
+  
+  const response = await fetch(url, {
+    cache: 'no-store'
+  });
+  
+  if (!response.ok) {
+    throw new Error("Failed to fetch user");
+  }
+  
+  return response.json();
 };
