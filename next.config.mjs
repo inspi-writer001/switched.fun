@@ -7,6 +7,12 @@ const nextConfig = {
       "utfs.io",
       "bqev70kfmw.ufs.sh",
     ],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: 'images.unsplash.com'
+      }
+    ]
   },
   webpack: (config) => {
     config.module.rules.push({

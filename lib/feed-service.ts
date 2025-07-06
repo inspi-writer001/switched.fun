@@ -66,8 +66,8 @@ export const getStreams = async () => {
 };
 
 export const getStreamsFromApi = async () => {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  const url = baseUrl ? `${baseUrl}/api/streams` : '/api/streams';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const url = `${baseUrl}/api/streams`;
   
   const response = await fetch(url, {
     cache: 'no-store'

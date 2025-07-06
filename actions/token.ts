@@ -50,3 +50,30 @@ export const createViewerToken = async (hostIdentity: string) => {
 
   return await Promise.resolve(token.toJwt());
 };
+
+export const createHostToken = async (hostIdentity: string) => {
+  const self = await getSelf();
+
+  if (self.id !== hostIdentity) {
+    throw new Error("Unauthorized");
+  }
+
+  const token = new AccessToken(
+    process.env.LIVEKIT_API_KEY!,
+    process.env.LIVEKIT_API_SECRET!,
+    {
+      identity: `host-${self.id}`,
+      name: self.username,
+    }
+  );
+
+  token.addGrant({
+    room: self.id,
+    roomJoin: true,
+    canPublish: true,
+    canPublishData: true,
+    canSubscribe: true,
+  });
+
+  return await Promise.resolve(token.toJwt());
+};

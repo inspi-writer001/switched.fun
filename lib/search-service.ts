@@ -120,9 +120,10 @@ export const getSearch = async (term?: string) => {
 
   return users;
 };
-export const searchFromApi = async (term: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  const url = baseUrl ? `${baseUrl}/api/search?q=${encodeURIComponent(term)}` : `/api/search?q=${encodeURIComponent(term)}`;
+
+export const searchFromApi = async (term?: string) => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const url = term ? `${baseUrl}/api/search?term=${encodeURIComponent(term)}` : `${baseUrl}/api/search`;
   
   const response = await fetch(url, {
     cache: 'no-store'

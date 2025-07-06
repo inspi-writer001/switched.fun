@@ -88,8 +88,8 @@ export const getSelfByUsername = async (username: string) => {
 };
 
 export const getSelfFromApi = async () => {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  const url = baseUrl ? `${baseUrl}/api/user/me` : '/api/user/me';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const url = `${baseUrl}/api/user/me`;
   
   const response = await fetch(url, {
     cache: 'no-store'
@@ -103,8 +103,23 @@ export const getSelfFromApi = async () => {
 };
 
 export const getSelfByUsernameFromApi = async (username: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  const url = baseUrl ? `${baseUrl}/api/user/${username}` : `/api/user/${username}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const url = `${baseUrl}/api/user/by-username/${username}`;
+  
+  const response = await fetch(url, {
+    cache: 'no-store'
+  });
+  
+  if (!response.ok) {
+    throw new Error("Failed to fetch user");
+  }
+  
+  return response.json();
+};
+
+export const getSelfByExternalIdFromApi = async (externalId: string) => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const url = `${baseUrl}/api/user/by-external-id/${externalId}`;
   
   const response = await fetch(url, {
     cache: 'no-store'

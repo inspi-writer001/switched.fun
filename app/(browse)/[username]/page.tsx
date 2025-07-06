@@ -21,7 +21,8 @@ const UserPage = async ({
     notFound();
   }
   
-  const isFollowing = await checkFollowStatusFromApi(user.id);
+  const followResponse = await checkFollowStatusFromApi(user.id);
+  const isFollowing = followResponse.isFollowing;
   const isBlocked = await isBlockedByUser(user.id);
 
   if (isBlocked) {

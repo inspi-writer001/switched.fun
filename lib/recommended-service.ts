@@ -210,8 +210,8 @@ if (typeof setInterval !== "undefined") {
 }
 
 export const getRecommendedFromApi = async () => {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  const url = baseUrl ? `${baseUrl}/api/recommended` : '/api/recommended';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const url = `${baseUrl}/api/recommended`;
   
   const response = await fetch(url, {
     cache: 'no-store'

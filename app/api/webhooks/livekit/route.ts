@@ -22,6 +22,7 @@ export async function POST(req: Request) {
     const event = receiver.receive(body, authorization);
     console.log("LiveKit webhook event:", event.event);
 
+    // Handle ingress events (OBS, RTMP, WHIP streams)
     if (event.event === "ingress_started") {
       await db.stream.update({
         where: {
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
           isLive: true,
         },
       });
-      console.log("Stream set to live:", event.ingressInfo?.ingressId);
+      console.log("Ingress stream set to live:", event.ingressInfo?.ingressId);
     }
 
     if (event.event === "ingress_ended") {
@@ -43,7 +44,46 @@ export async function POST(req: Request) {
           isLive: false,
         },
       });
-      console.log("Stream set to offline:", event.ingressInfo?.ingressId);
+      console.log("Ingress stream set to offline:", event.ingressInfo?.ingressId);
+    }
+
+    // Handle participant events (browser streams)
+    if (event.event === "participant_joined") {
+      const participant = event.participant;
+      if (participant && participant.identity.startsWith("host-")) {
+        // Extract user ID from host identity (host-{userId})
+        const userId = participant.identity.replace("host-", "");
+        
+        await db.stream.update({
+          where: {
+            userId: userId,
+            streamType: "BROWSER",
+          },
+          data: {
+            isLive: true,
+          },
+        });
+        console.log("Browser stream set to live for user:", userId);
+      }
+    }
+
+    if (event.event === "participant_left") {
+      const participant = event.participant;
+      if (participant && participant.identity.startsWith("host-")) {
+        // Extract user ID from host identity (host-{userId})
+        const userId = participant.identity.replace("host-", "");
+        
+        await db.stream.update({
+          where: {
+            userId: userId,
+            streamType: "BROWSER",
+          },
+          data: {
+            isLive: false,
+          },
+        });
+        console.log("Browser stream set to offline for user:", userId);
+      }
     }
 
     // Always return success response for LiveKit

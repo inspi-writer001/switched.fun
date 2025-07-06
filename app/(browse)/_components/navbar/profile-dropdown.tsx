@@ -3,7 +3,6 @@ import React from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuItem,
   DropdownMenuTrigger,
@@ -95,7 +94,7 @@ export const ProfileDropdown = ({
         <DropdownMenuSeparator className="bg-border" />
 
         <DropdownMenuItem className="cursor-pointer flex justify-between p-3 bg-transparent hover:bg-transparent">
-          <div className="flex items-center gap-x-2">
+          <div onClick={handleLogout} className="flex items-center gap-x-2">
             <LogOut className="w-4 h-4" />
             <p className="text-sm text-gray-300 capitalize">Logout</p>
           </div>

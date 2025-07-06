@@ -24,17 +24,13 @@ export async function GET(
       self = await getUser();
     } catch (err: any) {
       console.error("Civic Auth getUser failed:", err);
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
+      // Return false for unauthenticated users instead of error
+      return NextResponse.json({ isFollowing: false });
     }
 
     if (!self?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      // Return false for unauthenticated users
+      return NextResponse.json({ isFollowing: false });
     }
 
     // Check if following with caching
@@ -76,9 +72,7 @@ export async function GET(
       );
     }
     
-    return NextResponse.json(
-      { error: "Failed to check follow status" },
-      { status: 500 }
-    );
+    // Return false for any other errors instead of throwing
+    return NextResponse.json({ isFollowing: false });
   }
 } 

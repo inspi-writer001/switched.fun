@@ -97,8 +97,8 @@ export const invalidateUserCache = async (userId: string, username: string) => {
 };
 
 export const getUserByUsernameFromApi = async (username: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  const url = baseUrl ? `${baseUrl}/api/user/${encodeURIComponent(username)}` : `/api/user/${encodeURIComponent(username)}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const url = `${baseUrl}/api/user/public/${username}`;
   
   const response = await fetch(url, {
     cache: 'no-store'
@@ -112,8 +112,8 @@ export const getUserByUsernameFromApi = async (username: string) => {
 };
 
 export const getUserByIdFromApi = async (id: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  const url = baseUrl ? `${baseUrl}/api/user/${id}` : `/api/user/${id}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const url = `${baseUrl}/api/user/by-id/${id}`;
   
   const response = await fetch(url, {
     cache: 'no-store'

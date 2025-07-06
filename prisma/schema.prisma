@@ -27,10 +27,12 @@ model User {
 model Stream {
   id                  String    @id @default(uuid())
   name                String
+  title               String?   // Stream title for better description
   thumbnailUrl        String?
   ingressId           String?   @unique
   serverUrl           String?
   streamKey           String?
+  streamType          StreamType @default(INGRESS) // Distinguish between ingress and browser streams
   isLive              Boolean   @default(false)
   isChatEnabled       Boolean   @default(true)
   isChatDelayed       Boolean   @default(false)
@@ -45,6 +47,8 @@ model Stream {
   @@index([userId])
   @@index([ingressId])
   @@index([views])
+  @@index([streamType])
+  @@index([isLive, streamType])
 }
 
 model PlatformAnalytics {
@@ -151,4 +155,9 @@ model UserInterest {
   @@unique([userId, subCategoryId])
   @@index([userId])
   @@index([subCategoryId])
+}
+
+enum StreamType {
+  INGRESS  // OBS, RTMP, WHIP streams
+  BROWSER  // Browser-based streams
 }
