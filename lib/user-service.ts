@@ -60,7 +60,7 @@ export const getUserByUsername = async (username: string) => {
  */
 export const getUserById = async (id: string) => {
   return getCachedData({
-    key: `user:id:${id}`,
+    key: "user:id:${id}",
     ttl: 300, // 5 minutes
     fetchFn: async () => {
       const user = await db.user.findFirst({
@@ -91,37 +91,37 @@ export const getUserById = async (id: string) => {
  */
 export const invalidateUserCache = async (userId: string, username: string) => {
   await Promise.all([
-    invalidateCache(`user:id:${userId}`),
-    invalidateCache(`user:username:${username.toLowerCase()}`),
+    invalidateCache("user:id:${userId}"),
+    invalidateCache("user:username:${username.toLowerCase()}"),
   ]);
 };
 
 export const getUserByUsernameFromApi = async (username: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  const url = baseUrl ? `${baseUrl}/api/user/${encodeURIComponent(username)}` : `/api/user/${encodeURIComponent(username)}`;
-  
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const url = baseUrl + "/api/user/public/" + username;
+
   const response = await fetch(url, {
-    cache: 'no-store'
+    cache: "no-store",
   });
-  
+
   if (!response.ok) {
     throw new Error("Failed to fetch user");
   }
-  
+
   return response.json();
 };
 
 export const getUserByIdFromApi = async (id: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  const url = baseUrl ? `${baseUrl}/api/user/${id}` : `/api/user/${id}`;
-  
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const url = baseUrl + "/api/user/by-id/" + id;
+
   const response = await fetch(url, {
-    cache: 'no-store'
+    cache: "no-store",
   });
-  
+
   if (!response.ok) {
     throw new Error("Failed to fetch user");
   }
-  
+
   return response.json();
 };

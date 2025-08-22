@@ -23,18 +23,23 @@ interface GoLiveWithBrowserProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export const GoLiveWithBrowser = ({ user, open = false, onOpenChange }: GoLiveWithBrowserProps) => {
-
+export const GoLiveWithBrowser = ({
+  user,
+  open = false,
+  onOpenChange,
+}: GoLiveWithBrowserProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <div className="flex flex-col py-24">
-          <h2 className="text-3xl font-semibold font-sans text-center">Start a New Stream</h2>
-          <p className="text-gray-300 pt-2 pb-8 text-center">Add a title. You can update it later.</p>
+          <h2 className="text-3xl font-semibold font-sans text-center">
+            Browser Streaming
+          </h2>
+          <p className="text-gray-300 pt-2 pb-8 text-center">Coming soon</p>
 
-          <BrowserGoLiveForm />
+          {/* <BrowserGoLiveForm /> */}
         </div>
       </DialogContent>
     </Dialog>
   );
-}; 
+};

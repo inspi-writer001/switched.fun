@@ -22,12 +22,16 @@ interface GoLiveWithOBSProps {
   user: {
     id: string;
     username?: string;
-  } | null
+  } | null;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-export const GoLiveWithOBS = ({ user, open = false, onOpenChange }: GoLiveWithOBSProps) => {
+export const GoLiveWithOBS = ({
+  user,
+  open = false,
+  onOpenChange,
+}: GoLiveWithOBSProps) => {
   const [stream, setStream] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,13 +92,22 @@ export const GoLiveWithOBS = ({ user, open = false, onOpenChange }: GoLiveWithOB
   }, []);
 
   const handleGoToStudio = useCallback(() => {
-    if (!user) return;
+    console.log("handleGoToStudio triggered", { user });
+    if (!user) {
+      toast.error("User not found");
+      return;
+    }
     if (!user.username) {
       toast.error("Username is not set. Please set your username first.");
       return;
     }
+    // Log before navigation
+    console.log("Navigating to", `/u/${user.username}`);
     router.push(`/u/${user.username}`);
-    onOpenChange?.(false);
+    // Optionally delay closing dialog to allow navigation
+    setTimeout(() => {
+      onOpenChange?.(false);
+    }, 100);
   }, [user, router, onOpenChange]);
 
   // Security check: Only show for authenticated users
@@ -106,13 +119,17 @@ export const GoLiveWithOBS = ({ user, open = false, onOpenChange }: GoLiveWithOB
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold font-sans">Stream Setup</DialogTitle>
+          <DialogTitle className="text-2xl font-bold font-sans">
+            Stream Setup
+          </DialogTitle>
         </DialogHeader>
         {isLoading ? (
           <div className="flex items-center justify-center p-6">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              <span className="text-muted-foreground">Loading stream data...</span>
+              <span className="text-muted-foreground">
+                Loading stream data...
+              </span>
             </div>
           </div>
         ) : error ? (
@@ -125,7 +142,9 @@ export const GoLiveWithOBS = ({ user, open = false, onOpenChange }: GoLiveWithOB
             <div className="rounded-xl bg-muted/60 p-4 flex items-start gap-x-2">
               <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5" />
               <div className="space-y-2">
-                <p className="font-semibold text-foreground">Before you go live:</p>
+                <p className="font-semibold text-foreground">
+                  Before you go live:
+                </p>
                 <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
                   <li>Generate a stream key if you haven&apos;t already</li>
                   <li>Copy the server URL and stream key</li>
@@ -143,7 +162,9 @@ export const GoLiveWithOBS = ({ user, open = false, onOpenChange }: GoLiveWithOB
               <div className="space-y-4">
                 <div className="rounded-xl bg-muted p-6">
                   <div className="flex items-center gap-x-10">
-                    <p className="font-semibold text-foreground shrink-0">Server URL</p>
+                    <p className="font-semibold text-foreground shrink-0">
+                      Server URL
+                    </p>
                     <div className="space-y-2 w-full">
                       <div className="w-full flex items-center gap-x-2">
                         <Input
@@ -158,7 +179,9 @@ export const GoLiveWithOBS = ({ user, open = false, onOpenChange }: GoLiveWithOB
                 </div>
                 <div className="rounded-xl bg-muted p-6">
                   <div className="flex items-start gap-x-10">
-                    <p className="font-semibold text-foreground shrink-0">Stream Key</p>
+                    <p className="font-semibold text-foreground shrink-0">
+                      Stream Key
+                    </p>
                     <div className="space-y-2 w-full">
                       <div className="w-full flex items-center gap-x-2">
                         <Input

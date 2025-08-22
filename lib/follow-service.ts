@@ -36,9 +36,9 @@ export const getFollowedUsers = async () => {
           },
         },
         {
-          createdAt: "desc"
+          createdAt: "desc",
         },
-      ]
+      ],
     });
 
     return followedUsers;
@@ -157,31 +157,45 @@ export const unfollowUser = async (id: string) => {
 };
 
 export const getFollowingFromApi = async () => {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  const url = baseUrl ? `${baseUrl}/api/follow/following` : '/api/follow/following';
-  
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const url = baseUrl + "/api/follow/following";
+
   const response = await fetch(url, {
-    cache: 'no-store'
+    cache: "no-store",
   });
-  
+
   if (!response.ok) {
     throw new Error("Failed to fetch following");
   }
-  
+
   return response.json();
 };
 
 export const checkFollowStatusFromApi = async (userId: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
-  const url = baseUrl ? `${baseUrl}/api/follow/check/${userId}` : `/api/follow/check/${userId}`;
-  
-  const response = await fetch(url, {
-    cache: 'no-store'
-  });
-  
-  if (!response.ok) {
-    throw new Error("Failed to check follow status");
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const url = baseUrl + "/api/follow/check/" + userId;
+
+  try {
+    const response = await fetch(url, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Follow check failed for user " + userId + ":", {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorText,
+      });
+      return { isFollowing: false };
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error(
+      "Error in checkFollowStatusFromApi for user " + userId + ":",
+      error
+    );
+    return { isFollowing: false };
   }
-  
-  return response.json();
 };

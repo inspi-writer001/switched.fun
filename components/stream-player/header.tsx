@@ -12,7 +12,7 @@ import { VerifiedMark } from "@/components/verified-mark";
 import { UserAvatar, UserAvatarSkeleton } from "@/components/user-avatar";
 
 import { Actions, ActionsSkeleton } from "./actions";
-import WalletQRButton from "../tip-me/WalletQRButton";
+// import WalletQRButton from "../tip-me/WalletQRButton";
 import { Button } from "../ui/button";
 
 interface HeaderProps {
@@ -104,7 +104,7 @@ export const Header = ({
             )}
           </div>
         </div>
-        <WalletQRButton />
+        {/* <WalletQRButton /> */}
         {/* ←––– "Share Stream" button with Sonner toast –––→ */}
         <div className="flex items-center gap-x-2">
           <Button
