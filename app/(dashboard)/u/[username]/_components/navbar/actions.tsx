@@ -2,31 +2,29 @@
 
 import Link from "next/link";
 import { CircleUserRound, LogOut } from "lucide-react";
-import { useRouter, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
+import { useSelf } from "@/hooks/use-self";
 
 import { Button } from "@/components/ui/button";
 
 export const Actions = () => {
-  const router = useRouter();
-  const { username } = useParams(); // ← grabs the [username] from /u/[username]
+  const { username } = useParams();
 
-  const handleProfile = () => {
-    if (username) {
-      router.push(`/u/${username}/profile`);
-    }
-  };
+  const { data: currentUser } = useSelf();
+
   return (
     <div className="flex items-center justify-end gap-x-2">
       <div className="flex items-center justify-end gap-x-2">
-        <Button
-          onClick={handleProfile}
-          size="sm"
-          variant="ghost"
-          className="text-muted-foreground hover:text-primary"
-        >
-          <CircleUserRound className="h-5 w-5 mr-2" />
-          Profile
-        </Button>
+        <Link href={`/u/${username}/profile`}>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-muted-foreground hover:text-primary"
+          >
+            <CircleUserRound className="h-5 w-5 mr-2" />
+            Profile
+          </Button>
+        </Link>
       </div>
       <Link href="/" className="flex items-center">
         <Button

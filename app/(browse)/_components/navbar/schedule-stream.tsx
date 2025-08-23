@@ -24,7 +24,11 @@ interface ScheduleStreamProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export const ScheduleStream = ({ user, open = false, onOpenChange }: ScheduleStreamProps) => {
+export const ScheduleStream = ({
+  user,
+  open = false,
+  onOpenChange,
+}: ScheduleStreamProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -36,9 +40,9 @@ export const ScheduleStream = ({ user, open = false, onOpenChange }: ScheduleStr
   const router = useRouter();
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -60,7 +64,7 @@ export const ScheduleStream = ({ user, open = false, onOpenChange }: ScheduleStr
 
     try {
       setIsLoading(true);
-      
+
       // TODO: Implement schedule stream API call
       // const result = await scheduleStream({
       //   title: formData.title,
@@ -71,7 +75,7 @@ export const ScheduleStream = ({ user, open = false, onOpenChange }: ScheduleStr
 
       toast.success("Stream scheduled successfully!");
       onOpenChange?.(false);
-      
+
       // Reset form
       setFormData({
         title: "",
@@ -105,8 +109,8 @@ export const ScheduleStream = ({ user, open = false, onOpenChange }: ScheduleStr
             Schedule Stream
           </DialogTitle>
         </DialogHeader>
-        
-        <div className="space-y-6">
+        <p className="text-center">coming soon</p>
+        {/* <div className="space-y-6">
           <div className="rounded-xl bg-muted/50 p-4 flex items-start gap-x-2">
             <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5" />
             <div className="space-y-2">
@@ -185,8 +189,8 @@ export const ScheduleStream = ({ user, open = false, onOpenChange }: ScheduleStr
               {isLoading ? "Scheduling..." : "Schedule Stream"}
             </Button>
           </div>
-        </div>
+        </div> */}
       </DialogContent>
     </Dialog>
   );
-}; 
+};

@@ -37,7 +37,9 @@ export const ProfileDropdown = ({
   const { signOut } = useUser();
 
   const handleLogout = async () => {
+    console.log("Logout");
     await signOut();
+    console.log("Logout");
     refetch();
   };
 
@@ -83,18 +85,21 @@ export const ProfileDropdown = ({
           </DropdownMenuItem>
         </Link>
 
-        <DropdownMenuItem className="cursor-pointer flex justify-between p-3 bg-transparent hover:bg-transparent">
-          <div className="flex items-center gap-x-2">
-            <User className="w-4 h-4" />
-            <p className="text-sm text-gray-300 capitalize">Profile</p>
-          </div>
-
-          <ChevronRight className="w-4 h-4" />
-        </DropdownMenuItem>
+        <Link href={`/u/${currentUser?.username}/profile`}>
+          <DropdownMenuItem className="cursor-pointer flex justify-between p-3 bg-transparent hover:bg-transparent">
+            <div className="flex items-center gap-x-2">
+              <User className="w-4 h-4" />
+              <p className="text-sm text-gray-300 capitalize">Profile</p>
+            </div>
+            <ChevronRight className="w-4 h-4" />
+          </DropdownMenuItem>
+        </Link>
 
         <DropdownMenuSeparator className="bg-border" />
-
-        <DropdownMenuItem className="cursor-pointer flex justify-between p-3 bg-transparent hover:bg-transparent">
+        <DropdownMenuItem
+          className="cursor-pointer flex justify-between p-3 bg-transparent hover:bg-transparent"
+          onClick={handleLogout}
+        >
           <div className="flex items-center gap-x-2">
             <LogOut className="w-4 h-4" />
             <p className="text-sm text-gray-300 capitalize">Logout</p>
