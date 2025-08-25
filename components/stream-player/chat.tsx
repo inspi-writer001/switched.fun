@@ -15,10 +15,12 @@ import { ChatForm } from "./chat-form";
 import { ChatList, ChatListSkeleton } from "./chat-list";
 import { ChatHeader, ChatHeaderSkeleton } from "./chat-header";
 import { ChatCommunity } from "./chat-community";
+import { TipComponent } from "./gift-chat";
 
 interface ChatProps {
   hostName: string;
   hostIdentity: string;
+  hostWalletAddress: string;
   viewerName: string;
   isFollowing: boolean;
   isChatEnabled: boolean;
@@ -29,6 +31,7 @@ interface ChatProps {
 export const Chat = ({
   hostName,
   hostIdentity,
+  hostWalletAddress,
   viewerName,
   isFollowing,
   isChatEnabled,
@@ -36,7 +39,7 @@ export const Chat = ({
   isChatFollowersOnly,
 }: ChatProps) => {
   const matches = useMediaQuery("(max-width: 1024px)");
-  const { variant, onExpand } = useChatSidebar((state) => state);
+  const { variant, onExpand, onChangeVariant } = useChatSidebar((state) => state);
   const connectionState = useConnectionState();
   const participant = useRemoteParticipant(hostIdentity);
 
@@ -120,6 +123,14 @@ export const Chat = ({
           viewerName={viewerName}
           hostName={hostName}
           isHidden={isHidden}
+        />
+      )}
+      {variant === ChatVariant.GIFT && (
+        <TipComponent
+          hostIdentity={hostIdentity}
+          hostWalletAddress={hostWalletAddress}
+          onClose={() => onChangeVariant(ChatVariant.CHAT)}
+          onSendTip={(amount) => console.log(`Sending tip: ${amount}`)}
         />
       )}
 

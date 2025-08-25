@@ -3,6 +3,7 @@ import { create } from "zustand";
 export enum ChatVariant {
   CHAT = "CHAT",
   COMMUNITY = "COMMUNITY",
+  GIFT = "GIFT",
 }
 
 interface ChatSidebarStore {

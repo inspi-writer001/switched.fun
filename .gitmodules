@@ -1,0 +1,3 @@
+[submodule "switched_fun_program"]
+	path = switched_fun_program
+	url = git@github.com:superteamng-ekiti/switched_fun_program.git

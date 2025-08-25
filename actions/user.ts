@@ -19,6 +19,7 @@ const createUserSchema = z.object({
       "Username can only contain letters, numbers, and underscores"
     ),
   imageUrl: z.string().url("Invalid image URL"),
+  solanaWallet: z.string().optional(),
   interests: z.array(z.string()).min(3, "At least 3 interests are required").max(8, "Maximum 8 interests allowed").optional(),
 });
 
@@ -34,6 +35,7 @@ const updateUserSchema = z.object({
     )
     .optional(),
   bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
+  solanaWallet: z.string().optional(),
   interests: z.array(z.string()).min(3, "At least 3 interests are required").max(8, "Maximum 8 interests allowed").optional(),
 });
 
@@ -73,6 +75,7 @@ export const createUser = async (data: {
   externalUserId: string;
   username: string;
   imageUrl: string;
+  solanaWallet?: string;
   interests?: string[];
 }) => {
   try {
@@ -101,6 +104,7 @@ export const createUser = async (data: {
           externalUserId: validatedData.externalUserId,
           username: validatedData.username.toLowerCase(),
           imageUrl: validatedData.imageUrl,
+          solanaWallet: validatedData.solanaWallet,
           stream: {
             create: {
               name: `${validatedData.username.toLowerCase()}'s stream`,
@@ -174,6 +178,7 @@ export const updateUser = async (values: {
   id: string;
   username?: string;
   bio?: string;
+  solanaWallet?: string;
   interests?: string[];
 }) => {
   try {
@@ -184,7 +189,7 @@ export const updateUser = async (values: {
     const self = await getSelfFromApi();
     await checkRateLimit(self.id, "update_user", 10, 300); // 10 updates per 5 minutes
 
-    const updateData: { username?: string; bio?: string } = {};
+    const updateData: { username?: string; bio?: string; solanaWallet?: string } = {};
 
     // Check if username is available before updating
     if (validatedValues.username) {
@@ -207,6 +212,10 @@ export const updateUser = async (values: {
 
     if (validatedValues.bio !== undefined) {
       updateData.bio = validatedValues.bio;
+    }
+
+    if (validatedValues.solanaWallet !== undefined) {
+      updateData.solanaWallet = validatedValues.solanaWallet;
     }
 
     // Use transaction for atomic update with timeout

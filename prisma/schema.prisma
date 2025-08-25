@@ -14,6 +14,7 @@ model User {
   imageUrl       String
   externalUserId String   @unique
   bio            String?
+  solanaWallet   String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   following      Follow[] @relation("Following")

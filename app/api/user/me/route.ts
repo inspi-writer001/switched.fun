@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUser } from "@civic/auth-web3/nextjs";
 import { db } from "@/lib/db";
 import { getCachedData } from "@/lib/redis";
+import { z } from "zod";
 
 export async function GET(request: NextRequest) {
   try {
@@ -61,6 +62,67 @@ export async function GET(request: NextRequest) {
     console.error("[GET /api/user/me] error:", err);
     return NextResponse.json(
       { error: "Failed to fetch user" },
+      { status: 500 }
+    );
+  }
+}
+
+const updateWalletSchema = z.object({
+  solanaWallet: z.string().min(1, "Solana wallet address is required"),
+});
+
+export async function PATCH(request: NextRequest) {
+  try {
+    // Get authenticated user from Civic
+    let self;
+    try {
+      self = await getUser();
+    } catch (err: any) {
+      console.error("Civic Auth getUser failed:", err);
+      return NextResponse.json(
+        { error: "Authentication failed" },
+        { status: 401 }
+      );
+    }
+
+    if (!self?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Parse request body
+    const body = await request.json();
+    const validatedData = updateWalletSchema.parse(body);
+
+    // Update user's solana wallet
+    const updatedUser = await db.user.update({
+      where: { externalUserId: self.id },
+      data: { solanaWallet: validatedData.solanaWallet },
+      select: {
+        id: true,
+        username: true,
+        solanaWallet: true,
+      },
+    });
+
+    return NextResponse.json({
+      message: "Solana wallet updated successfully",
+      user: updatedUser,
+    });
+  } catch (err: any) {
+    console.error("[PATCH /api/user/me] error:", err);
+    
+    if (err instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: err.errors[0]?.message || "Invalid input data" },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Failed to update user" },
       { status: 500 }
     );
   }
