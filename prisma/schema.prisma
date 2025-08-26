@@ -9,20 +9,22 @@ datasource db {
 }
 
 model User {
-  id             String         @id @default(uuid())
-  username       String         @unique
-  imageUrl       String
-  externalUserId String         @unique
-  bio            String?
-  solanaWallet   String?        // Adding back the field you want
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  following      Follow[]       @relation("Following")
-  followedBy     Follow[]       @relation("FollowedBy")
-  blocking       Block[]        @relation("Blocking")
-  blockedBy      Block[]        @relation("BlockedBy")
-  stream         Stream?
-  interests      UserInterest[]
+  id                      String         @id @default(uuid())
+  username                String         @unique
+  imageUrl                String
+  externalUserId          String         @unique
+  bio                     String?
+  solanaWallet            String?        // User's connected wallet
+  platformWallet          String?        // Platform-generated wallet
+  isSolanaPlatformWallet  Boolean        @default(false)
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+  following               Follow[]       @relation("Following")
+  followedBy              Follow[]       @relation("FollowedBy")
+  blocking                Block[]        @relation("Blocking")
+  blockedBy               Block[]        @relation("BlockedBy")
+  stream                  Stream?
+  interests               UserInterest[]
 }
 
 model Stream {

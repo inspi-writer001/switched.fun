@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { getSelf } from "@/lib/auth-service";
 import { invalidateUserCache } from "@/lib/user-service";
 import { getCachedData } from "@/lib/redis";
+import { createUserPlatformWallet } from "@/lib/platform-wallet";
 
 // Input validation schemas
 const createUserSchema = z.object({
@@ -143,6 +144,15 @@ export const createUser = async (data: {
 
     if (!user) {
       throw new Error("Failed to create user");
+    }
+
+    // Create platform wallet for the new user (run in background)
+    try {
+      await createUserPlatformWallet(user.id);
+      console.log(`Platform wallet created for user: ${user.username}`);
+    } catch (error) {
+      console.error(`Failed to create platform wallet for user ${user.username}:`, error);
+      // Don't throw error here - user creation should succeed even if platform wallet fails
     }
 
     // Batch revalidate paths

@@ -36,6 +36,7 @@
     "@tanstack/react-virtual": "^3.13.12",
     "@uploadthing/react": "^6.0.2",
     "@upstash/redis": "^1.35.0",
+    "bs58": "^6.0.0",
     "chai": "^5.2.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
@@ -73,6 +74,7 @@
   "devDependencies": {
     "@tanstack/eslint-plugin-query": "^5.78.0",
     "@types/bn.js": "^5.2.0",
+    "@types/bs58": "^5.0.0",
     "@types/chai": "^5.2.2",
     "@types/mocha": "^10.0.10",
     "@types/node": "^20",
