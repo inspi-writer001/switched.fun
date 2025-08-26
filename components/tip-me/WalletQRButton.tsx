@@ -20,6 +20,7 @@ import {
   getOrCreateAssociatedTokenAccount,
   getAccount,
   getAssociatedTokenAddress,
+  TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import { BN } from "bn.js";
 // import { Wallet } from "@coral-xyz/anchor";
@@ -33,12 +34,12 @@ const supportedTokens = [
   {
     name: "USDC",
     symbol: "usdc",
-    contractAddress: "6mWfrWzYf5ot4S8Bti5SCDRnZWA5ABPH1SNkSq4mNN1C",
+    contractAddress: "2o39Cm7hzaXmm9zGGGsa5ZiveJ93oMC2D6U7wfsREcCo",
   },
   {
     name: "USDT",
     symbol: "usdt",
-    contractAddress: "6mWfrWzYf5ot4S8Bti5SCDRnZWA5ABPH1SNkSq4mNN1C",
+    contractAddress: "2o39Cm7hzaXmm9zGGGsa5ZiveJ93oMC2D6U7wfsREcCo",
   },
 ];
 
@@ -155,33 +156,13 @@ export const WalletQRButton: React.FC<WalletQRButtonProps> = ({
         throw new Error("Wallet not connected");
       }
 
-      // 2️⃣ Fetch mint decimals
-      const mintInfo = await getMint(connection, new PublicKey(token_mint));
-      const decimals = mintInfo.decimals;
-
-      // const amount = 3.3;
-      // 3️⃣ Compute lamports
-      const lamports = Number(amount) * 10 ** decimals;
-      if (lamports <= 0) {
-        throw new Error("Amount must be greater than zero");
-      }
-
-      // 4️⃣ Ensure associated token account
-      const tokenAccount = await getOrCreateAssociatedTokenAccountWithProvider(
-        provider,
-        new PublicKey(address),
-        new PublicKey(token_mint)
-      );
-      console.log("new_token_account", tokenAccount.address.toBase58());
-
       // 5️⃣ Send the tipUser transaction
       const tx = await program.methods
-        .tipUser(new BN(lamports))
+        .createStreamer()
         .accounts({
-          recipient: new PublicKey(address),
-          tipper: new PublicKey(solAddress),
-          tipperTokenAccount: tokenAccount.address.toBase58(),
+          signer: address,
           tokenMint: token_mint,
+          tokenProgram: TOKEN_PROGRAM_ID,
         })
         .signers([])
         .rpc();
@@ -253,10 +234,10 @@ export const WalletQRButton: React.FC<WalletQRButtonProps> = ({
   }, []);
 
   const fetchUserProgramWallet = async () => {
-    if (!solAddress) return;
+    if (!address) return;
     console.log("solAddress", solAddress);
     const [recipientStatePDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from("recipient_state"), new PublicKey(solAddress).toBuffer()],
+      [Buffer.from("user"), new PublicKey(address).toBuffer()],
       program.programId
     );
 
@@ -265,7 +246,7 @@ export const WalletQRButton: React.FC<WalletQRButtonProps> = ({
     console.log("Recipient State PDA:", recipientStatePDA.toBase58());
     try {
       const recipientStateAccount =
-        await program.account.userAccount.fetch(recipientStatePDA);
+        await program.account.streamer.fetch(recipientStatePDA);
       setIsPDAInit(true);
       console.log("Recipient State Data:", recipientStateAccount);
     } catch (err) {

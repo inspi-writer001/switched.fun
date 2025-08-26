@@ -2,10 +2,10 @@ import { AnchorProvider, Program, Wallet } from "@coral-xyz/anchor";
 import { Connection, PublicKey, Transaction } from "@solana/web3.js";
 
 // import idl from '../../anchor/target/idl/satoshi_arena.json'
-// @ts-ignore
-import idl from "../target/idl/switched_fun.json";
-// @ts-ignore
-import type { SwitchedFun } from "../target/types/switched_fun";
+
+import idl from "../switched_fun_program/target/idl/switched_fun.json";
+
+import type { SwitchedFun } from "../switched_fun_program/target/types/switched_fun.ts";
 import {
   createAssociatedTokenAccountInstruction,
   getAccount,
@@ -15,23 +15,6 @@ import {
 const programId = new PublicKey(idl.address);
 
 let treasury = new PublicKey("4ST8rbRTA9HpJhHgegJwmdM5dCE3KzavXkpPGztmJKwZ"); // TODO treasury for saving fees
-
-// export const getProvider = () => {
-//   const connection = new Connection(
-//     "https://api.devnet.solana.com",
-//     "confirmed"
-//   );
-
-//   console.log(window);
-
-//   const wallet = window.solana;
-//   if (!wallet) throw new Error("Solana wallet not found");
-
-//   //   const wallet = window.solana as Wallet
-//   return new AnchorProvider(connection, wallet, {
-//     preflightCommitment: "processed"
-//   });
-// };
 
 export const getProvider = (
   connection: Connection,

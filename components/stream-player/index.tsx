@@ -30,6 +30,8 @@ type CustomUser = {
   bio: string | null;
   stream: CustomStream | null;
   imageUrl: string;
+  externalUserId: string;
+  solanaWallet: string | null;
   _count: { followedBy: number }
 };
 
@@ -108,6 +110,7 @@ export const StreamPlayer = ({
             viewerName={name}
             hostName={user.username}
             hostIdentity={user.id}
+            hostWalletAddress={user.solanaWallet}
             isFollowing={isFollowing}
             isChatEnabled={stream.isChatEnabled}
             isChatDelayed={stream.isChatDelayed}

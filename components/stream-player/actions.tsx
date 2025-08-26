@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { onFollow, onUnfollow } from "@/actions/follow";
+import { ChatVariant, useChatSidebar } from "@/store/use-chat-sidebar";
+import { DollarSign } from "lucide-react";
 
 interface ActionsProps {
   hostIdentity: string;
@@ -25,6 +27,7 @@ export const Actions = ({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const { user } = useUser();
+  const { onChangeVariant } = useChatSidebar();
 
   const handleFollow = () => {
     startTransition(() => {
@@ -60,19 +63,42 @@ export const Actions = ({
     }
   };
 
+  const handleSendTip = () => {
+    if (!user?.id) {
+      return router.push("/sign-in");
+    }
+
+    if (isHost) return;
+
+    onChangeVariant(ChatVariant.GIFT);
+  };
+
   return (
-    <Button
-      disabled={isPending || isHost}
-      onClick={toggleFollow}
-      variant="primary"
-      size="sm"
-      className="w-full lg:w-auto"
-    >
-      <Heart
-        className={cn("h-4 w-4 mr-2", isFollowing ? "fill-white" : "fill-none")}
-      />
-      {isFollowing ? "Unfollow" : "Follow"}
-    </Button>
+    <div className="flex gap-x-2">
+      <Button
+        disabled={isPending || isHost}
+        onClick={toggleFollow}
+        variant="primary"
+        size="sm"
+        className="w-full lg:w-auto"
+      >
+        <Heart
+          className={cn("h-4 w-4 mr-2", isFollowing ? "fill-white" : "fill-none")}
+        />
+        {isFollowing ? "Unfollow" : "Follow"}
+      </Button>
+      
+      <Button
+        disabled={isHost}
+        onClick={handleSendTip}
+        variant="primary"
+        size="sm"
+        className="w-full lg:w-auto"
+      >
+        <DollarSign className="h-4 w-4 mr-2" />
+        Send Tip
+      </Button>
+    </div>
   );
 };
 
