@@ -19,6 +19,9 @@ export const generatePlatformWallet = async (
   message: string;
 }> => {
   try {
+    // Get server wallet first
+    const serverWallet = getServerWallet();
+    
     // Create the createStreamer transaction
     const tx = await program.methods
       .createStreamer()
@@ -26,11 +29,11 @@ export const generatePlatformWallet = async (
         signer: userPublicKey,
         tokenMint: tokenMint,
         tokenProgram: TOKEN_PROGRAM_ID,
+        broadcaster: serverWallet.publicKey,
       })
       .transaction();
 
     // Set fee payer to server wallet (platform pays gas)
-    const serverWallet = getServerWallet();
     console.log('Server wallet public key:', serverWallet.publicKey.toString());
     console.log('User public key:', userPublicKey.toString());
     tx.feePayer = serverWallet.publicKey;
