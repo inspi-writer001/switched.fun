@@ -14,8 +14,6 @@ import {
 
 const programId = new PublicKey(idl.address);
 
-let treasury = new PublicKey("4ST8rbRTA9HpJhHgegJwmdM5dCE3KzavXkpPGztmJKwZ"); // TODO treasury for saving fees
-
 export const getProvider = (
   connection: Connection,
   civicWallet: Wallet | undefined
@@ -62,4 +60,4 @@ export async function getOrCreateAssociatedTokenAccountWithProvider(
   }
 }
 
-export { programId, treasury };
+export { programId };

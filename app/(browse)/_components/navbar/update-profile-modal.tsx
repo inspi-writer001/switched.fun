@@ -106,22 +106,14 @@ export const UpdateUserProfileModal = React.memo(
 
         setSubmitting(true);
         try {
-          if (currentUser.username) {
-            await updateUser({
-              id: currentUser.id,
-              username,
-              interests: selectedSubCategories,
-              solanaWallet,
-            });
-          } else {
-            await createUser({
-              externalUserId: currentUser.id,
-              username,
-              imageUrl: currentUser.picture,
-              interests: selectedSubCategories,
-              solanaWallet,
-            });
-          }
+          // Always use updateUser for existing users (who have an id)
+          // This handles both users with empty usernames and users updating their info
+          await updateUser({
+            id: currentUser.id,
+            username,
+            interests: selectedSubCategories,
+            solanaWallet,
+          });
         } catch (err) {
           console.error("Failed to update user:", err);
         } finally {

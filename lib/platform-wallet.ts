@@ -4,13 +4,94 @@ import {
   getConnection, 
   getServerWallet, 
   signAndSendTransaction,
+  broadcastTransaction,
   createTransactionTemplate 
 } from './server-wallet';
 import { db } from './db';
 
-// Generate a new platform wallet for user
-export const generatePlatformWallet = (): Keypair => {
-  return Keypair.generate();
+// Generate a platform wallet transaction for user to sign
+export const generatePlatformWallet = async (
+  userPublicKey: PublicKey,
+  tokenMint: PublicKey,
+  program: any // Anchor program instance
+): Promise<{
+  serializedTransaction: string;
+  message: string;
+}> => {
+  try {
+    // Create the createStreamer transaction
+    const tx = await program.methods
+      .createStreamer()
+      .accounts({
+        signer: userPublicKey,
+        tokenMint: tokenMint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .transaction();
+
+    // Set fee payer to server wallet (platform pays gas)
+    const serverWallet = getServerWallet();
+    console.log('Server wallet public key:', serverWallet.publicKey.toString());
+    console.log('User public key:', userPublicKey.toString());
+    tx.feePayer = serverWallet.publicKey;
+    
+    // Get recent blockhash
+    const connection = getConnection();
+    const { blockhash } = await connection.getLatestBlockhash();
+    tx.recentBlockhash = blockhash;
+
+    // Server wallet signs first (as fee payer)
+    tx.partialSign(serverWallet);
+
+    // Serialize the transaction for user to sign (server signature already included)
+    const serializedTransaction = tx.serialize({
+      requireAllSignatures: false,
+      verifySignatures: false
+    }).toString('base64');
+    
+    return {
+      serializedTransaction,
+      message: 'Transaction created. User must sign and return for broadcasting.'
+    };
+  } catch (error) {
+    console.error('Failed to generate platform wallet transaction:', error);
+    throw error;
+  }
+};
+
+// Broadcast user-signed platform wallet transaction
+export const broadcastPlatformWalletTransaction = async (
+  userSignedTransaction: string
+): Promise<string> => {
+  try {
+    // Deserialize the user-signed transaction (already has server signature)
+    const transactionBuffer = Buffer.from(userSignedTransaction, 'base64');
+    const transaction = Transaction.from(transactionBuffer);
+    
+    console.log('Final transaction ready for broadcast:');
+    console.log('- Fee payer:', transaction.feePayer?.toString());
+    console.log('- Signatures:', transaction.signatures.map(sig => ({
+      publicKey: sig.publicKey?.toString(),
+      signature: sig.signature ? 'present' : 'missing'
+    })));
+    
+    // Verify transaction signatures before sending
+    try {
+      const isValid = transaction.verifySignatures();
+      console.log('Transaction signature verification:', isValid);
+    } catch (verifyError) {
+      console.log('Signature verification error:', verifyError.message);
+    }
+    
+    // Transaction should already be fully signed, just broadcast it
+    const signature = await signAndSendTransaction(transaction);
+    
+    console.log(`Platform wallet transaction broadcasted: ${signature}`);
+    return signature;
+  } catch (error) {
+    console.error('Failed to broadcast platform wallet transaction:', error);
+    throw error;
+  }
 };
 
 // Create streamer profile on-chain using the program
@@ -51,10 +132,15 @@ export const createStreamerProfile = async (
   }
 };
 
-// Create platform wallet and update database
-export const createUserPlatformWallet = async (userId: string): Promise<{
-  platformWallet: string;
-  signature?: string;
+// Create platform wallet transaction for user to sign
+export const createUserPlatformWalletTransaction = async (
+  userId: string,
+  userPublicKey: string,
+  tokenMint: string,
+  program: any
+): Promise<{
+  serializedTransaction: string;
+  message: string;
 }> => {
   try {
     // Check if user already has platform wallet
@@ -72,31 +158,63 @@ export const createUserPlatformWallet = async (userId: string): Promise<{
     }
 
     if (existingUser.isSolanaPlatformWallet && existingUser.platformWallet) {
-      return {
-        platformWallet: existingUser.platformWallet,
-      };
+      throw new Error('User already has a platform wallet');
     }
 
-    // Generate new platform wallet
-    const platformWallet = generatePlatformWallet();
-    const platformWalletAddress = platformWallet.publicKey.toString();
+    // Generate the transaction for user to sign
+    const userPubKey = new PublicKey(userPublicKey);
+    const tokenMintPubKey = new PublicKey(tokenMint);
+    
+    const result = await generatePlatformWallet(userPubKey, tokenMintPubKey, program);
+    
+    return result;
+  } catch (error) {
+    console.error('Failed to create platform wallet transaction:', error);
+    throw error;
+  }
+};
 
-    // Update database with platform wallet
+// Complete platform wallet creation after user signs
+export const completePlatformWalletCreation = async (
+  userId: string,
+  userPublicKey: string,
+  userSignedTransaction: string
+): Promise<{
+  platformWallet: string;
+  signature: string;
+}> => {
+  try {
+    // Broadcast the user-signed transaction
+    const signature = await broadcastPlatformWalletTransaction(userSignedTransaction);
+    
+    // Get user info
+    const existingUser = await db.user.findUnique({
+      where: { id: userId },
+      select: { username: true },
+    });
+
+    if (!existingUser) {
+      throw new Error('User not found');
+    }
+
+    // Only update database AFTER successful broadcast
+    // The transaction was successful if we reach this point
     await db.user.update({
       where: { id: userId },
       data: {
-        platformWallet: platformWalletAddress,
+        platformWallet: userPublicKey,
         isSolanaPlatformWallet: true,
       },
     });
 
-    console.log(`Platform wallet created for user ${existingUser.username}: ${platformWalletAddress}`);
+    console.log(`Platform wallet completed for user ${existingUser.username}: ${userPublicKey}`);
     
     return {
-      platformWallet: platformWalletAddress,
+      platformWallet: userPublicKey,
+      signature,
     };
   } catch (error) {
-    console.error('Failed to create platform wallet:', error);
+    console.error('Failed to complete platform wallet creation:', error);
     throw error;
   }
 };
@@ -170,6 +288,33 @@ export const userHasPlatformWallet = async (userId: string): Promise<boolean> =>
     return user?.isSolanaPlatformWallet ?? false;
   } catch (error) {
     console.error('Failed to check user platform wallet:', error);
+    return false;
+  }
+};
+
+// Verify if streamer account actually exists on-chain
+export const verifyStreamerAccountExists = async (
+  userPublicKey: PublicKey,
+  program: any
+): Promise<boolean> => {
+  try {
+    if (!program) {
+      console.warn('Program not available for verification');
+      return false;
+    }
+
+    // Calculate the PDA for the streamer account
+    const [streamerPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from("user"), userPublicKey.toBuffer()],
+      program.programId
+    );
+
+    // Try to fetch the account
+    const account = await program.account.streamer.fetchNullable(streamerPDA);
+    
+    return account !== null;
+  } catch (error) {
+    console.error('Failed to verify streamer account:', error);
     return false;
   }
 };

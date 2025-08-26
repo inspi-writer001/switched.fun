@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { getSelf } from "@/lib/auth-service";
 import { invalidateUserCache } from "@/lib/user-service";
 import { getCachedData } from "@/lib/redis";
-import { createUserPlatformWallet } from "@/lib/platform-wallet";
+// Platform wallet creation is now handled through the modal flow
 
 // Input validation schemas
 const createUserSchema = z.object({
@@ -19,7 +19,7 @@ const createUserSchema = z.object({
       /^[a-zA-Z0-9_]+$/,
       "Username can only contain letters, numbers, and underscores"
     ),
-  imageUrl: z.string().url("Invalid image URL"),
+  imageUrl: z.string().optional(),
   solanaWallet: z.string().optional(),
   interests: z.array(z.string()).min(3, "At least 3 interests are required").max(8, "Maximum 8 interests allowed").optional(),
 });
@@ -104,7 +104,7 @@ export const createUser = async (data: {
         data: {
           externalUserId: validatedData.externalUserId,
           username: validatedData.username.toLowerCase(),
-          imageUrl: validatedData.imageUrl,
+          imageUrl: validatedData.imageUrl || "https://i.postimg.cc/wxGCZ9Qy/Frame-12.png",
           solanaWallet: validatedData.solanaWallet,
           stream: {
             create: {
@@ -128,43 +128,38 @@ export const createUser = async (data: {
         });
       }
 
-      // Return user with interests
-      return tx.user.findUnique({
-        where: { id: newUser.id },
-        include: {
-          stream: true,
-          interests: {
-            include: {
-              subCategory: true,
-            },
-          },
-        },
-      });
+      return newUser;
     });
 
-    if (!user) {
+    // Fetch the complete user data after transaction
+    const completeUser = await db.user.findUnique({
+      where: { id: user.id },
+      include: {
+        stream: true,
+        interests: {
+          include: {
+            subCategory: true,
+          },
+        },
+      },
+    });
+
+    if (!completeUser) {
       throw new Error("Failed to create user");
     }
 
-    // Create platform wallet for the new user (run in background)
-    try {
-      await createUserPlatformWallet(user.id);
-      console.log(`Platform wallet created for user: ${user.username}`);
-    } catch (error) {
-      console.error(`Failed to create platform wallet for user ${user.username}:`, error);
-      // Don't throw error here - user creation should succeed even if platform wallet fails
-    }
+    // Platform wallet will be created through the modal flow when user logs in
 
     // Batch revalidate paths
     const pathsToRevalidate = [
-      `/u/${user.username}`,
-      `/@${user.username}`,
+      `/u/${completeUser.username}`,
+      `/@${completeUser.username}`,
       "/", // Home page to show new user
     ];
 
     await Promise.all(pathsToRevalidate.map((path) => revalidatePath(path)));
 
-    return user;
+    return completeUser;
   } catch (err: any) {
     console.error("[createUser] error:", err);
 
@@ -236,6 +231,16 @@ export const updateUser = async (values: {
           where: { id: self.id },
           data: updateData,
         });
+
+        // If setting username for first time (user had empty username), update stream name
+        if (updateData.username && (!self.username || self.username === "")) {
+          await tx.stream.updateMany({
+            where: { userId: self.id },
+            data: {
+              name: `${updateData.username}'s stream`,
+            },
+          });
+        }
       }
 
       // Handle interests update separately
@@ -257,8 +262,8 @@ export const updateUser = async (values: {
         }
       }
     }, {
-      maxWait: 5000, // 5 second timeout
-      timeout: 10000, // 10 second timeout
+      maxWait: 15000, // 15 second timeout
+      timeout: 20000, // 20 second timeout
     });
 
     // Fetch the updated user after transaction completes
@@ -282,6 +287,8 @@ export const updateUser = async (values: {
     if (!updatedUser) {
       throw new Error("Failed to update user");
     }
+
+    // Platform wallet will be created through the modal flow when needed
 
     // Batch cache invalidation and path revalidation
     const cacheInvalidations = [invalidateUserCache(self.id, self.username)];

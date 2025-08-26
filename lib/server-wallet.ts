@@ -8,6 +8,7 @@ import {
   TransactionSignature,
   LAMPORTS_PER_SOL
 } from '@solana/web3.js';
+import { Wallet } from '@coral-xyz/anchor';
 import bs58 from 'bs58';
 
 // Global wallet instance
@@ -63,6 +64,23 @@ export const getServerWallet = (): Keypair => {
   return serverWallet;
 };
 
+// Get server wallet as Anchor Wallet interface
+export const getServerWalletAsAnchorWallet = (): Wallet => {
+  const keypair = getServerWallet();
+  
+  return {
+    publicKey: keypair.publicKey,
+    signTransaction: async (transaction: Transaction) => {
+      transaction.partialSign(keypair);
+      return transaction;
+    },
+    signAllTransactions: async (transactions: Transaction[]) => {
+      transactions.forEach(tx => tx.partialSign(keypair));
+      return transactions;
+    }
+  };
+};
+
 // Get wallet public key
 export const getServerWalletPublicKey = (): PublicKey => {
   const wallet = getServerWallet();
@@ -87,24 +105,34 @@ export const signAndSendTransaction = async (
 
     // For regular transactions
     if (transaction instanceof Transaction) {
-      transaction.feePayer = wallet.publicKey;
+      // Don't override fee payer - it should already be set
+      // Don't override blockhash - it should already be set
       
-      // Get recent blockhash if not set
-      if (!transaction.recentBlockhash) {
-        const { blockhash } = await conn.getLatestBlockhash();
-        transaction.recentBlockhash = blockhash;
+      // Only sign if server wallet hasn't signed yet
+      const serverSigned = transaction.signatures.some(sig => 
+        sig.publicKey?.equals(wallet.publicKey) && sig.signature !== null
+      );
+      
+      if (!serverSigned) {
+        transaction.partialSign(wallet);
       }
 
-      // Sign and send
-      const signature = await sendAndConfirmTransaction(
-        conn,
-        transaction,
-        [wallet],
-        {
-          commitment: 'confirmed',
-          skipPreflight: false,
-        }
+      // Send transaction directly (already fully signed)
+      // Use sendRawTransaction since we have a fully signed transaction
+      const signature = await conn.sendRawTransaction(transaction.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+
+      // Wait for confirmation
+      const confirmation = await conn.confirmTransaction(
+        signature,
+        'confirmed'
       );
+
+      if (confirmation.value.err) {
+        throw new Error(`Transaction failed: ${confirmation.value.err}`);
+      }
 
       console.log(`Transaction sent: ${signature}`);
       return signature;
