@@ -17,6 +17,7 @@ import { AlertCircle } from "lucide-react";
 import { createIngress } from "@/actions/ingress";
 import { IngressInput } from "livekit-server-sdk";
 import { toast } from "sonner";
+import Link from "next/link";
 
 interface GoLiveWithOBSProps {
   user: {
@@ -90,30 +91,6 @@ export const GoLiveWithOBS = ({
       setIsLoading(false);
     }
   }, []);
-
-  const handleGoToStudio = useCallback(() => {
-    console.log("handleGoToStudio triggered", { user });
-    if (!user) {
-      toast.error("User not found");
-      return;
-    }
-    if (!user.username) {
-      toast.error("Username is not set. Please set your username first.");
-      return;
-    }
-    // Log before navigation
-    console.log("Navigating to", `/u/${user.username}`);
-    router.push(`/u/${user.username}`);
-    // Optionally delay closing dialog to allow navigation
-    setTimeout(() => {
-      onOpenChange?.(false);
-    }, 100);
-  }, [user, router, onOpenChange]);
-
-  // Security check: Only show for authenticated users
-  if (!user?.id) {
-    return null;
-  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -203,13 +180,11 @@ export const GoLiveWithOBS = ({
                   >
                     Generate New Key
                   </Button>
-                  <Button
-                    variant="primary"
-                    onClick={handleGoToStudio}
-                    className="font-semibold"
-                  >
-                    Go to Stream Studio
-                  </Button>
+                  <Link href={`/u/${user?.username}`}>
+                    <Button variant="primary" className="font-semibold">
+                      Go to Stream Studio
+                    </Button>
+                  </Link>
                 </div>
               </div>
             ) : (
