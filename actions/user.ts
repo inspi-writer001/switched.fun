@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { getSelfFromApi } from "@/lib/auth-service";
+import { getSelf } from "@/lib/auth-service";
 import { invalidateUserCache } from "@/lib/user-service";
 import { getCachedData } from "@/lib/redis";
 
@@ -186,7 +186,7 @@ export const updateUser = async (values: {
     const validatedValues = updateUserSchema.parse(values);
 
     // Get current user and apply rate limiting
-    const self = await getSelfFromApi();
+    const self = await getSelf();
     await checkRateLimit(self.id, "update_user", 10, 300); // 10 updates per 5 minutes
 
     const updateData: { username?: string; bio?: string; solanaWallet?: string } = {};
@@ -219,7 +219,7 @@ export const updateUser = async (values: {
     }
 
     // Use transaction for atomic update with timeout
-    const updated = await db.$transaction(async (tx) => {
+    await db.$transaction(async (tx) => {
       // Update user basic info if needed
       if (Object.keys(updateData).length > 0) {
         await tx.user.update({

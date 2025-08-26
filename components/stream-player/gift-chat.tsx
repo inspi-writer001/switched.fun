@@ -151,21 +151,21 @@ export const TipComponent = ({
   useEffect(() => {
     const updateUserWallet = async () => {
       if (!address) return;
-      
+
       try {
-        const response = await fetch('/api/user/me', {
-          method: 'PATCH',
+        const response = await fetch("/api/user/me", {
+          method: "PATCH",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ solanaWallet: address }),
         });
-        
+
         if (!response.ok) {
-          console.error('Failed to update user wallet');
+          console.error("Failed to update user wallet");
         }
       } catch (error) {
-        console.error('Error updating user wallet:', error);
+        console.error("Error updating user wallet:", error);
       }
     };
 
@@ -214,7 +214,7 @@ export const TipComponent = ({
   }, [address, wallet, selectedToken]);
 
   return (
-    <div className="bg-gray-900 text-white w-full max-w-sm mx-auto h-full flex flex-col">
+    <div className=" text-white w-full max-w-sm mx-auto h-full flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-700">
         <h2 className="text-lg font-medium">Send Tip</h2>
@@ -235,7 +235,7 @@ export const TipComponent = ({
           <select
             value={selectedToken}
             onChange={(e) => setSelectedToken(e.target.value)}
-            className="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-sm text-white"
+            className="w-full bg-transparent border border-gray-600 rounded px-2 py-1 text-sm text-white"
           >
             {supportedTokens.map((token) => (
               <option key={token.symbol} value={token.symbol}>
@@ -271,7 +271,7 @@ export const TipComponent = ({
                 ${
                   selectedAmount === amount
                     ? "bg-red-600 border-red-600 text-white"
-                    : "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-500"
+                    : "bg-transparent border-gray-600 text-gray-300 hover:border-gray-500"
                 }
               `}
             >
@@ -287,7 +287,7 @@ export const TipComponent = ({
             type="number"
             value={customAmount}
             onChange={handleCustomAmountChange}
-            className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-gray-500 focus:outline-none"
+            className="w-full bg-transparent border border-gray-600 rounded-lg px-3 py-2 text-white focus:border-gray-500 focus:outline-none"
             min="1"
             max={balance}
           />

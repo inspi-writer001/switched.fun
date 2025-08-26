@@ -4,24 +4,31 @@ import Link from "next/link";
 import { Clapperboard, Loader2 } from "lucide-react";
 import { useUser } from "@civic/auth-web3/react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GoLive from "./goLive";
 import { UpdateUserProfileModal } from "./update-profile-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileDropdown } from "./profile-dropdown";
 import { useSelf } from "@/hooks/use-self";
+const log = console.log;
 
 export const Actions = () => {
   const [loading, setLoading] = useState(false);
   const [openUsernameModal, setOpenUsernameModal] = useState(false);
   const { signIn } = useUser();
 
-  const {
-    data: currentUser,
-    isLoading,
-    isError,
-    refetch,
-  } = useSelf();
+  const { data: currentUser, isLoading, isError, refetch } = useSelf();
+
+  // useEffect(() => {
+  //   if (
+  //     !currentUser ||
+  //     !currentUser?.username ||
+  //     !currentUser?.interests?.length
+  //   ) {
+  //     log(currentUser);
+  //     setOpenUsernameModal(true);
+  //   }
+  // }, [currentUser]);
 
   // 👉 2️⃣ Handle the "Login" button
   async function handleLogin() {

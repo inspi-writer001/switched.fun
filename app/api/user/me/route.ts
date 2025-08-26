@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUser } from "@civic/auth-web3/nextjs";
 import { db } from "@/lib/db";
-import { getCachedData } from "@/lib/redis";
 import { z } from "zod";
 
 export async function GET(request: NextRequest) {
@@ -19,42 +18,30 @@ export async function GET(request: NextRequest) {
     }
 
     if (!self?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get user from database with caching
-    const user = await getCachedData({
-      key: `user:me:${self.id}`,
-      ttl: 300, // 5 minutes
-      fetchFn: async () => {
-        return db.user.findUnique({
-          where: { externalUserId: self.id },
+    const user = await db.user.findUnique({
+      where: { externalUserId: self.id },
+      include: {
+        interests: {
           include: {
-            interests: {
-              include: {
-                subCategory: true,
-              },
-            },
-            stream: true,
-            _count: {
-              select: {
-                followedBy: true,
-                following: true,
-              },
-            },
+            subCategory: true,
           },
-        });
+        },
+        stream: true,
+        _count: {
+          select: {
+            followedBy: true,
+            following: true,
+          },
+        },
       },
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     return NextResponse.json(user);
@@ -86,10 +73,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (!self?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Parse request body
@@ -113,7 +97,7 @@ export async function PATCH(request: NextRequest) {
     });
   } catch (err: any) {
     console.error("[PATCH /api/user/me] error:", err);
-    
+
     if (err instanceof z.ZodError) {
       return NextResponse.json(
         { error: err.errors[0]?.message || "Invalid input data" },
@@ -126,4 +110,4 @@ export async function PATCH(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
