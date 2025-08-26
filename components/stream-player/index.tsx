@@ -32,7 +32,7 @@ type CustomUser = {
   imageUrl: string;
   externalUserId: string;
   solanaWallet: string | null;
-  _count: { followedBy: number }
+  _count: { followedBy: number };
 };
 
 interface StreamPlayerProps {
@@ -44,17 +44,13 @@ interface StreamPlayerProps {
 export const StreamPlayer = ({
   user,
   stream,
-  isFollowing
+  isFollowing,
 }: StreamPlayerProps) => {
-  const {
-    token,
-    name,
-    identity,
-  } = useViewerToken(user.id);
+  const { token, name, identity } = useViewerToken(user.id);
   const { collapsed } = useChatSidebar((state) => state);
 
   if (!token || !name || !identity) {
-    return <StreamPlayerSkeleton />
+    return <StreamPlayerSkeleton />;
   }
 
   return (
@@ -100,17 +96,12 @@ export const StreamPlayer = ({
             followedByCount={user._count.followedBy}
           />
         </div>
-        <div
-          className={cn(
-            "col-span-1",
-            collapsed && "hidden"
-          )}
-        >
+        <div className={cn("col-span-1", collapsed && "hidden")}>
           <Chat
             viewerName={name}
             hostName={user.username}
             hostIdentity={user.id}
-            hostWalletAddress={user.solanaWallet}
+            hostWalletAddress={user.solanaWallet || ""}
             isFollowing={isFollowing}
             isChatEnabled={stream.isChatEnabled}
             isChatDelayed={stream.isChatDelayed}
@@ -133,5 +124,5 @@ export const StreamPlayerSkeleton = () => {
         <ChatSkeleton />
       </div>
     </div>
-  )
-}
+  );
+};

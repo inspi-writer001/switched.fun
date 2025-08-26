@@ -29,7 +29,7 @@ interface User {
 
 export function useSelf() {
   return useQuery<User>({
-    queryKey: ["self"],
+    queryKey: ["currentUser"],
     queryFn: async () => {
       const response = await fetch("/api/user/me");
       if (!response.ok) {
@@ -37,7 +37,6 @@ export function useSelf() {
       }
       return response.json();
     },
-    staleTime: 0.5 * 60 * 1000, // 1 minutes
-    gcTime: 0.5 * 60 * 1000, // 1 minutes
+    retry: false,
   });
 }

@@ -19,16 +19,15 @@ export const Actions = () => {
 
   const { data: currentUser, isLoading, isError, refetch } = useSelf();
 
-  // useEffect(() => {
-  //   if (
-  //     !currentUser ||
-  //     !currentUser?.username ||
-  //     !currentUser?.interests?.length
-  //   ) {
-  //     log(currentUser);
-  //     setOpenUsernameModal(true);
-  //   }
-  // }, [currentUser]);
+  // Remove the empty useEffect and uncomment/modify the existing one:
+  useEffect(() => {
+    if (!isLoading && !isError) {
+      if (!currentUser?.username || !currentUser?.interests?.length) {
+        console.log("User needs to complete profile");
+        setOpenUsernameModal(true);
+      }
+    }
+  }, [currentUser, isLoading, isError]);
 
   // 👉 2️⃣ Handle the "Login" button
   async function handleLogin() {
