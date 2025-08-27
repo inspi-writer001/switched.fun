@@ -83,11 +83,14 @@ export const Actions = ({
         className="w-full lg:w-auto"
       >
         <Heart
-          className={cn("h-4 w-4 mr-2", isFollowing ? "fill-white" : "fill-none")}
+          className={cn(
+            "h-4 w-4 mr-2",
+            isFollowing ? "fill-white" : "fill-none"
+          )}
         />
         {isFollowing ? "Unfollow" : "Follow"}
       </Button>
-      
+
       <Button
         disabled={isHost}
         onClick={handleSendTip}
@@ -95,7 +98,6 @@ export const Actions = ({
         size="sm"
         className="w-full lg:w-auto"
       >
-        <DollarSign className="h-4 w-4 mr-2" />
         Send Tip
       </Button>
     </div>

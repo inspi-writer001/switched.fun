@@ -367,7 +367,7 @@ export const TipComponent = ({
                     key={amount}
                     onClick={() => handleAmountSelect(amount)}
                     className={`
-                    h-8 w-10 min-w-10 rounded-sm border font-medium text-xs transition-all
+                    h-8 w-10 min-w-20 rounded-sm border font-medium text-xs transition-all
                     ${
                       selectedAmount === amount
                         ? "bg-[#FE3C3E40] border-[#FE3C3E] text-white"
@@ -473,7 +473,10 @@ export const TipComponent = ({
                 {filteredGifts.map((gift) => (
                   <button
                     key={gift.id}
-                    onClick={() => handleGiftSelect(gift.id)}
+                    onClick={() => {
+                      handleGiftSelect(gift.id);
+                      handleAmountSelect(gift.price);
+                    }}
                     className={`relative rounded-2xl p-4 flex flex-col items-center justify-center transition-all hover:scale-105 h-32 ${
                       selectedGift === gift.id
                         ? "bg-[#FE3C3E40] border-[#FE3C3E] text-white"
@@ -536,7 +539,7 @@ export const TipComponent = ({
                 }
                 className="md:w-[100px] bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium py-2 rounded-lg transition-colors"
               >
-                {isPending
+                {selectedGift && isPending
                   ? "Sending..."
                   : !address || !wallet
                     ? "Connect Wallet"
@@ -544,18 +547,6 @@ export const TipComponent = ({
               </button>
             </div>
           </div>
-
-          {/* Send Gift Button */}
-          {selectedGift && (
-            <div className="p-4 border-t border-gray-700">
-              <button
-                onClick={handleSendGift}
-                className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
-              >
-                Send Gift
-              </button>
-            </div>
-          )}
         </>
       )}
     </div>
