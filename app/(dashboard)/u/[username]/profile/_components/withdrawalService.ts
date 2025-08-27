@@ -8,9 +8,14 @@ import {
   getAssociatedTokenAddress,
   createTransferInstruction,
   TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  createAssociatedTokenAccountInstruction,
 } from "@solana/spl-token";
 import * as anchor from "@coral-xyz/anchor";
 import { BN } from "bn.js";
+import { getProgram } from "@/utils/program";
+import { userHasWallet } from "@civic/auth-web3";
+import idl from "@/switched_fun_program/target/idl/switched_fun.json";
 
 // Constants
 const USDC_MINT = new PublicKey("2o39Cm7hzaXmm9zGGGsa5ZiveJ93oMC2D6U7wfsREcCo");
@@ -23,6 +28,8 @@ export interface WithdrawalParams {
   walletType: 'platform' | 'normal';
   userAddress: string;
   connection: Connection;
+  program?: any; // Anchor program instance (for platform withdrawals)
+  civicWallet?: any; // Civic wallet for normal withdrawals
 }
 
 export class WithdrawalService {
@@ -53,20 +60,44 @@ export class WithdrawalService {
    */
   static convertSolToUsdc(solAmount: number, solPrice: number, usdcPrice: number = 1): number {
     const usdValue = solAmount * solPrice;
-    return usdValue / usdPrice;
+    return usdValue / usdcPrice;
   }
 
   /**
    * Handles platform wallet withdrawal using program.methods.withdraw
    */
   static async withdrawFromPlatformWallet(params: WithdrawalParams, solPrice: number): Promise<string> {
-    const { amount, destinationAddress, userAddress, connection } = params;
+    const { amount, destinationAddress, userAddress, connection, program } = params;
+    
+    if (!program) {
+      throw new Error("Program instance required for platform withdrawal");
+    }
     
     try {
-      // Calculate user PDA
-      const [userPDA] = PublicKey.findProgramAddressSync(
-        [Buffer.from("user"), new PublicKey(userAddress).toBuffer()],
-        PROGRAM_ID
+      const userPubkey = new PublicKey(userAddress);
+      
+      // Calculate streamer state PDA (user state)
+      const [streamerState] = PublicKey.findProgramAddressSync(
+        [Buffer.from("user"), userPubkey.toBuffer()],
+        program.programId
+      );
+
+      // Calculate global state PDA
+      const [globalState] = PublicKey.findProgramAddressSync(
+        [Buffer.from("global_state")],
+        program.programId
+      );
+
+      // Calculate treasury account PDA  
+      const [treasuryAccount] = PublicKey.findProgramAddressSync(
+        [globalState.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), USDC_MINT.toBuffer()],
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      );
+
+      // Calculate streamer ATA (platform wallet USDC account)
+      const [streamerAta] = PublicKey.findProgramAddressSync(
+        [streamerState.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), USDC_MINT.toBuffer()],
+        ASSOCIATED_TOKEN_PROGRAM_ID
       );
 
       // Get destination ATA
@@ -76,22 +107,8 @@ export class WithdrawalService {
         destinationPubkey
       );
 
-      // Create a mock transaction for fee estimation
-      const mockTransaction = new Transaction();
-      // Add a simple instruction for estimation (this is rough)
-      mockTransaction.add(
-        createTransferInstruction(
-          await getAssociatedTokenAddress(USDC_MINT, userPDA, true),
-          destinationATA,
-          userPDA,
-          Math.floor(amount * Math.pow(10, USDC_DECIMALS)),
-          [],
-          TOKEN_PROGRAM_ID
-        )
-      );
-
-      // Estimate gas fee
-      const gasInSol = await this.estimateGasFee(connection, mockTransaction);
+      // Estimate gas fee and convert to USDC
+      const gasInSol = 0.001; // Conservative estimate for withdraw instruction
       const gasInUsdc = this.convertSolToUsdc(gasInSol, solPrice);
       const gasInUsdcBaseUnits = new BN(Math.ceil(gasInUsdc * Math.pow(10, USDC_DECIMALS)));
       
@@ -100,32 +117,33 @@ export class WithdrawalService {
         gasInSol,
         gasInUsdc,
         gasInUsdcBaseUnits: gasInUsdcBaseUnits.toString(),
+        streamerState: streamerState.toString(),
+        streamerAta: streamerAta.toString(),
+        destinationATA: destinationATA.toString(),
       });
 
-      // TODO: Implement actual program.methods.withdraw call
-      // This would require:
-      // 1. Loading the actual IDL
-      // 2. Creating proper Anchor provider with signing capability
-      // 3. Calling program.methods.withdraw with proper accounts
-      
-      /*
+      // Execute withdrawal using Anchor program - same pattern as tipping
       const tx = await program.methods
         .withdraw({
           amount: new BN(Math.floor(amount * Math.pow(10, USDC_DECIMALS))),
           gasInUsdc: gasInUsdcBaseUnits,
         })
-        .signers([userKeypair])
         .accounts({
           signer: userPubkey,
           receivingAta: destinationATA,
+          streamerAta: streamerAta,
           tokenMint: USDC_MINT,
+          globalState: globalState,
+          treasuryAccount: treasuryAccount,
+          streamerState: streamerState,
           tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: anchor.web3.SystemProgram.programId,
         })
         .rpc();
-      */
 
-      // For now, return a mock transaction signature
-      throw new Error("Platform wallet withdrawal requires full Anchor integration - not yet implemented");
+      console.log("Platform withdrawal successful:", tx);
+      return tx;
       
     } catch (error) {
       console.error("Platform withdrawal error:", error);
@@ -137,7 +155,11 @@ export class WithdrawalService {
    * Handles normal wallet withdrawal using direct SPL transfer
    */
   static async withdrawFromNormalWallet(params: WithdrawalParams): Promise<string> {
-    const { amount, destinationAddress, userAddress, connection } = params;
+    const { amount, destinationAddress, userAddress, connection, civicWallet } = params;
+    
+    if (!civicWallet || !civicWallet.signTransaction) {
+      throw new Error("Civic wallet with signing capability required for normal wallet withdrawal");
+    }
     
     try {
       const userPubkey = new PublicKey(userAddress);
@@ -157,14 +179,29 @@ export class WithdrawalService {
         destinationATA: destinationATA.toString(),
       });
 
-      // TODO: Implement actual SPL transfer
-      // This would require:
-      // 1. Creating the transfer instruction
-      // 2. Creating and signing the transaction
-      // 3. Sending the transaction
+      // Create transaction with transfer instruction
+      const transaction = new Transaction();
       
-      /*
-      const transaction = new Transaction().add(
+      // Check if destination ATA exists, if not add create instruction
+      try {
+        await connection.getAccountInfo(destinationATA);
+      } catch {
+        // ATA doesn't exist, need to create it
+        console.log("Adding create ATA instruction for destination");
+        transaction.add(
+          createAssociatedTokenAccountInstruction(
+            userPubkey, // payer
+            destinationATA,
+            destinationPubkey, // owner
+            USDC_MINT,
+            TOKEN_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
+          )
+        );
+      }
+
+      // Add transfer instruction
+      transaction.add(
         createTransferInstruction(
           sourceATA,
           destinationATA,
@@ -175,13 +212,41 @@ export class WithdrawalService {
         )
       );
 
-      // Sign and send transaction (requires wallet integration)
-      const signature = await connection.sendTransaction(transaction, [userKeypair]);
-      await connection.confirmTransaction(signature);
-      */
+      // Get recent blockhash
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = userPubkey;
+
+      console.log("Transaction before signing:", {
+        feePayer: transaction.feePayer?.toString(),
+        instructions: transaction.instructions.length,
+        blockhash,
+      });
+
+      // Sign transaction using Civic wallet
+      const signedTransaction = await civicWallet.signTransaction(transaction);
       
-      // For now, return a mock transaction signature
-      throw new Error("Normal wallet withdrawal requires wallet signing integration - not yet implemented");
+      console.log("Transaction signed successfully");
+
+      // Send and confirm transaction
+      const signature = await connection.sendRawTransaction(signedTransaction.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+
+      // Wait for confirmation
+      const confirmation = await connection.confirmTransaction({
+        signature,
+        blockhash,
+        lastValidBlockHeight,
+      }, 'confirmed');
+
+      if (confirmation.value.err) {
+        throw new Error(`Transaction failed: ${confirmation.value.err}`);
+      }
+
+      console.log("Normal wallet withdrawal successful:", signature);
+      return signature;
       
     } catch (error) {
       console.error("Normal wallet withdrawal error:", error);

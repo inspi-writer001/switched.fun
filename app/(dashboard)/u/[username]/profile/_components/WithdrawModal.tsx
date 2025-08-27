@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { userHasWallet } from "@civic/auth-web3";
-import { useUser } from "@civic/auth-web3/react";
+import { useUser, useWallet } from "@civic/auth-web3/react";
 import {
   Connection,
   PublicKey,
@@ -24,6 +24,8 @@ import {
 import { Wallet, ArrowDownCircle } from "lucide-react";
 import { usePrices } from "./usePrices";
 import { WithdrawalService } from "./withdrawalService";
+import { getProgram } from "@/utils/program";
+import { Wallet as WalletType } from "@coral-xyz/anchor";
 
 // USDC Token mint (6 decimals)
 const USDC_MINT = new PublicKey("2o39Cm7hzaXmm9zGGGsa5ZiveJ93oMC2D6U7wfsREcCo");
@@ -43,6 +45,7 @@ interface WithdrawModalProps {
 
 export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
   const userContext = useUser();
+  const { wallet, address: solAddress } = useWallet({ type: "solana" });
   const hasWallet = userHasWallet(userContext);
   const userAddress = hasWallet ? userContext.solana.address : "";
   const { prices } = usePrices();
@@ -236,19 +239,33 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
   }, [withdrawAmount, destinationAddress, selectedWallet, maxWithdrawable]);
 
   const handleWithdraw = useCallback(async () => {
-    if (!validation.isValid || !selectedWallet || !userAddress) return;
+    if (!validation.isValid || !selectedWallet || !userAddress || !hasWallet) return;
 
     setSubmitting(true);
     setError(null);
     
     try {
-      const withdrawalParams = {
+      let withdrawalParams: any = {
         amount: parseFloat(withdrawAmount),
         destinationAddress: destinationAddress.trim(),
         walletType: selectedWallet.type,
         userAddress,
         connection,
       };
+
+      if (selectedWallet.type === 'platform') {
+        // For platform withdrawals, use Anchor program
+        const program = getProgram(connection, wallet as unknown as WalletType);
+        withdrawalParams.program = program;
+      } else {
+        // For normal wallet withdrawals, use Civic wallet for signing
+        const civicWallet = {
+          publicKey: new PublicKey(userAddress),
+          signTransaction: userContext.solana?.signTransaction,
+          signAllTransactions: userContext.solana?.signAllTransactions,
+        };
+        withdrawalParams.civicWallet = civicWallet;
+      }
 
       const solPrice = prices.sol || 100; // Fallback to $100 if price not available
       const signature = await WithdrawalService.withdraw(withdrawalParams, solPrice);
@@ -263,7 +280,7 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
     } finally {
       setSubmitting(false);
     }
-  }, [validation.isValid, selectedWallet, withdrawAmount, destinationAddress, userAddress, connection, prices.sol]);
+  }, [validation.isValid, selectedWallet, withdrawAmount, destinationAddress, userAddress, connection, prices.sol, hasWallet, userContext.solana, wallet]);
 
   const handleClose = () => {
     setOpen(false);
