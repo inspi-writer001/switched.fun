@@ -62,7 +62,6 @@ export default function TipStats() {
     priceError,
   ]);
 
-
   // 5️⃣ Helper to render a value or show Loading…
   const renderAmt = (value: number) =>
     balLoading || priceLoading ? (
@@ -73,7 +72,7 @@ export default function TipStats() {
 
   return (
     <Card className="overflow-hidden">
-      <div className="bg-slate-900 py-2 px-4">
+      <div className="bg-transparent py-2 px-4 w-full border-b">
         <span className="text-white text-sm font-medium">
           Total Tips Received (This Month)
         </span>

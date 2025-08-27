@@ -2,12 +2,12 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, Clock } from "lucide-react";
 
-const NA = "N/A";
+const NA = "0";
 
 const StreamStats = () => {
   return (
     <Card className="overflow-hidden">
-      <div className=" bg-slate-900 py-2 px-4">
+      <div className=" bg-transparent py-2 px-4 w-full border-b">
         <span className="text-white text-sm font-medium">
           Stream Statistics
         </span>

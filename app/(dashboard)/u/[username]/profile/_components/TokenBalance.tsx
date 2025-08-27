@@ -111,9 +111,9 @@ export default function TokenBalance() {
   // ——————————————
   return (
     <Card className="overflow-hidden">
-      <div className="bg-slate-900 py-2 px-4">
-        <span className="text-white text-sm font-medium">
-          My Wallet Balance ({network})
+      <div className="bg-transparent py-2 px-4 w-full border-b">
+        <span className="text-white text-sm font-medium mt-2  w-full">
+          Wallet Balance ({network})
         </span>
       </div>
       <CardContent className="p-4">
