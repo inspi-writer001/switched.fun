@@ -17,15 +17,13 @@ import {
   clusterApiUrl,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
-import {
-  getAssociatedTokenAddress,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { Wallet, ArrowDownCircle } from "lucide-react";
 import { usePrices } from "./usePrices";
-import { WithdrawalService } from "./withdrawalService";
+import { withdraw } from "./withdrawalService";
 import { getProgram } from "@/utils/program";
 import { Wallet as WalletType } from "@coral-xyz/anchor";
+import { toast } from "sonner";
 
 // USDC Token mint (6 decimals)
 const USDC_MINT = new PublicKey("2o39Cm7hzaXmm9zGGGsa5ZiveJ93oMC2D6U7wfsREcCo");
@@ -34,7 +32,7 @@ const USDC_DECIMALS = 6;
 interface WalletBalance {
   address: string;
   balance: number;
-  type: 'platform' | 'normal';
+  type: "platform" | "normal";
   displayName: string;
 }
 
@@ -58,7 +56,9 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
 
   // State
   const [walletBalances, setWalletBalances] = useState<WalletBalance[]>([]);
-  const [selectedWallet, setSelectedWallet] = useState<WalletBalance | null>(null);
+  const [selectedWallet, setSelectedWallet] = useState<WalletBalance | null>(
+    null
+  );
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [destinationAddress, setDestinationAddress] = useState("");
   const [loading, setLoading] = useState(false);
@@ -69,11 +69,13 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
   // Calculate platform wallet PDA
   const platformWalletPDA = useMemo(() => {
     if (!hasWallet || !userAddress) return null;
-    
+
     try {
       // This should match your program's user state PDA derivation
       // Adjust the seeds based on your actual program logic
-      const programId = new PublicKey("swinS25mqCw6ExEAtLJFxp6HYcqMvoYxKz3by6FfbRD");
+
+      let program = getProgram(connection, wallet as unknown as any);
+      const programId = program.programId;
       const [pda] = PublicKey.findProgramAddressSync(
         [Buffer.from("user"), new PublicKey(userAddress).toBuffer()],
         programId
@@ -107,18 +109,23 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
             USDC_MINT,
             userPubkey
           );
-          
+
           const accountInfo = await connection.getAccountInfo(userATA);
           if (accountInfo) {
-            const tokenAccountInfo = await connection.getParsedAccountInfo(userATA);
-            if (tokenAccountInfo.value?.data && 'parsed' in tokenAccountInfo.value.data) {
-              const balance = tokenAccountInfo.value.data.parsed.info.tokenAmount.uiAmount;
+            const tokenAccountInfo =
+              await connection.getParsedAccountInfo(userATA);
+            if (
+              tokenAccountInfo.value?.data &&
+              "parsed" in tokenAccountInfo.value.data
+            ) {
+              const balance =
+                tokenAccountInfo.value.data.parsed.info.tokenAmount.uiAmount;
               if (balance > 0) {
                 balances.push({
                   address: userAddress,
                   balance,
-                  type: 'normal',
-                  displayName: `${userAddress.slice(0, 4)}...${userAddress.slice(-4)}`
+                  type: "normal",
+                  displayName: `${userAddress.slice(0, 4)}...${userAddress.slice(-4)}`,
                 });
               }
             }
@@ -135,18 +142,23 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
               platformWalletPDA,
               true // allowOwnerOffCurve for PDA
             );
-            
+
             const accountInfo = await connection.getAccountInfo(platformATA);
             if (accountInfo) {
-              const tokenAccountInfo = await connection.getParsedAccountInfo(platformATA);
-              if (tokenAccountInfo.value?.data && 'parsed' in tokenAccountInfo.value.data) {
-                const balance = tokenAccountInfo.value.data.parsed.info.tokenAmount.uiAmount;
+              const tokenAccountInfo =
+                await connection.getParsedAccountInfo(platformATA);
+              if (
+                tokenAccountInfo.value?.data &&
+                "parsed" in tokenAccountInfo.value.data
+              ) {
+                const balance =
+                  tokenAccountInfo.value.data.parsed.info.tokenAmount.uiAmount;
                 if (balance > 0) {
                   balances.push({
                     address: platformWalletPDA.toString(),
                     balance,
-                    type: 'platform',
-                    displayName: `Platform (${platformWalletPDA.toString().slice(0, 4)}...${platformWalletPDA.toString().slice(-4)})`
+                    type: "platform",
+                    displayName: `Platform (${platformWalletPDA.toString().slice(0, 4)}...${platformWalletPDA.toString().slice(-4)})`,
                   });
                 }
               }
@@ -182,7 +194,7 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
 
   // Calculate gas fee for platform withdrawals
   useEffect(() => {
-    if (selectedWallet?.type === 'platform' && withdrawAmount && prices.sol) {
+    if (selectedWallet?.type === "platform" && withdrawAmount && prices.sol) {
       // Estimate gas fee (this is a simplified calculation)
       // In production, you'd want to simulate the transaction to get accurate fees
       const estimatedLamports = 10000; // Rough estimate for a typical transaction
@@ -196,7 +208,7 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
 
   const maxWithdrawable = useMemo(() => {
     if (!selectedWallet) return 0;
-    if (selectedWallet.type === 'platform') {
+    if (selectedWallet.type === "platform") {
       // For platform wallet, subtract estimated gas fee
       return Math.max(0, selectedWallet.balance - gasFee);
     }
@@ -205,29 +217,33 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
 
   const validation = useMemo(() => {
     const amount = parseFloat(withdrawAmount);
-    const hasValidAmount = !isNaN(amount) && amount > 0 && amount <= maxWithdrawable;
+    const hasValidAmount =
+      !isNaN(amount) && amount > 0 && amount <= maxWithdrawable;
     const hasValidDestination = destinationAddress.trim().length > 0;
     const hasSelectedWallet = selectedWallet !== null;
-    
+
     try {
       if (hasValidDestination) {
         new PublicKey(destinationAddress.trim());
       }
     } catch {
-      return { 
-        isValid: false, 
-        error: "Invalid destination address" 
+      return {
+        isValid: false,
+        error: "Invalid destination address",
       };
     }
 
     if (!hasSelectedWallet) {
       return { isValid: false, error: "Select a wallet" };
     }
-    
+
     if (!hasValidAmount) {
-      return { 
-        isValid: false, 
-        error: amount > maxWithdrawable ? "Amount exceeds available balance" : "Enter valid amount" 
+      return {
+        isValid: false,
+        error:
+          amount > maxWithdrawable
+            ? "Amount exceeds available balance"
+            : "Enter valid amount",
       };
     }
 
@@ -239,11 +255,12 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
   }, [withdrawAmount, destinationAddress, selectedWallet, maxWithdrawable]);
 
   const handleWithdraw = useCallback(async () => {
-    if (!validation.isValid || !selectedWallet || !userAddress || !hasWallet) return;
+    if (!validation.isValid || !selectedWallet || !userAddress || !hasWallet)
+      return;
 
     setSubmitting(true);
     setError(null);
-    
+
     try {
       let withdrawalParams: any = {
         amount: parseFloat(withdrawAmount),
@@ -253,10 +270,31 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
         connection,
       };
 
-      if (selectedWallet.type === 'platform') {
-        // For platform withdrawals, use Anchor program
-        const program = getProgram(connection, wallet as unknown as WalletType);
-        withdrawalParams.program = program;
+      if (selectedWallet.type === "platform") {
+        // For platform withdrawals, use server-broadcast pattern
+        withdrawalParams.userContext = userContext;
+
+        // Temporarily close modal to allow Civic popup to be interactive
+        setOpen(false);
+
+        try {
+          const solPrice = prices.sol || 100; // Fallback to $100 if price not available
+          const signature = await withdraw(
+            withdrawalParams,
+            solPrice
+          );
+
+          console.log("Withdrawal successful:", signature);
+          toast.success("Withdrawal successful!", {
+            description: `Transaction: ${signature}`,
+          });
+          handleClose();
+        } catch (err: any) {
+          console.error("Withdrawal error:", err);
+          setError(err.message || "Withdrawal failed");
+          // Reopen modal to show error
+          setOpen(true);
+        }
       } else {
         // For normal wallet withdrawals, use Civic wallet for signing
         const civicWallet = {
@@ -265,22 +303,49 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
           signAllTransactions: userContext.solana?.signAllTransactions,
         };
         withdrawalParams.civicWallet = civicWallet;
-      }
 
-      const solPrice = prices.sol || 100; // Fallback to $100 if price not available
-      const signature = await WithdrawalService.withdraw(withdrawalParams, solPrice);
-      
-      console.log("Withdrawal successful:", signature);
-      alert(`Withdrawal successful! Transaction: ${signature}`);
-      handleClose();
-      
+        // Temporarily close modal to allow Civic popup to be interactive
+        setOpen(false);
+
+        try {
+          const solPrice = prices.sol || 100; // Fallback to $100 if price not available
+          const signature = await withdraw(
+            withdrawalParams,
+            solPrice
+          );
+
+          console.log("Withdrawal successful:", signature);
+          toast.success("Withdrawal successful!", {
+            description: `Transaction: ${signature}`,
+          });
+          handleClose();
+        } catch (err: any) {
+          console.error("Withdrawal error:", err);
+          setError(err.message || "Withdrawal failed");
+          // Reopen modal to show error
+          setOpen(true);
+        }
+      }
     } catch (err: any) {
       console.error("Withdrawal error:", err);
       setError(err.message || "Withdrawal failed");
+      // If we reach here, modal was never closed, so we don't need to reopen
     } finally {
       setSubmitting(false);
     }
-  }, [validation.isValid, selectedWallet, withdrawAmount, destinationAddress, userAddress, connection, prices.sol, hasWallet, userContext.solana, wallet]);
+  }, [
+    validation.isValid,
+    selectedWallet,
+    withdrawAmount,
+    destinationAddress,
+    userAddress,
+    connection,
+    prices.sol,
+    hasWallet,
+    userContext.solana,
+    wallet,
+    setOpen,
+  ]);
 
   const handleClose = () => {
     setOpen(false);
@@ -301,7 +366,9 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
 
           {loading ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">Loading wallet balances...</p>
+              <p className="text-muted-foreground">
+                Loading wallet balances...
+              </p>
             </div>
           ) : walletBalances.length === 0 ? (
             <div className="text-center py-8">
@@ -328,12 +395,16 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
                         <div>
                           <p className="font-medium">{wallet.displayName}</p>
                           <p className="text-xs text-muted-foreground">
-                            {wallet.type === 'platform' ? 'Platform Wallet' : 'Personal Wallet'}
+                            {wallet.type === "platform"
+                              ? "Platform Wallet"
+                              : "Personal Wallet"}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">${wallet.balance.toFixed(6)}</p>
+                        <p className="font-semibold">
+                          ${wallet.balance.toFixed(6)}
+                        </p>
                         <p className="text-xs text-muted-foreground">USDC</p>
                       </div>
                     </div>
@@ -361,16 +432,19 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
                         variant="ghost"
                         size="sm"
                         className="absolute right-1 top-1 h-8 px-2 text-xs"
-                        onClick={() => setWithdrawAmount(maxWithdrawable.toString())}
+                        onClick={() =>
+                          setWithdrawAmount(maxWithdrawable.toString())
+                        }
                       >
                         MAX
                       </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Available: ${maxWithdrawable.toFixed(6)} USDC
-                      {selectedWallet.type === 'platform' && gasFee > 0 && (
+                      {selectedWallet.type === "platform" && gasFee > 0 && (
                         <span className="text-orange-600">
-                          {" "}(Gas fee: ~${gasFee.toFixed(6)} USDC)
+                          {" "}
+                          (Gas fee: ~${gasFee.toFixed(6)} USDC)
                         </span>
                       )}
                     </p>
@@ -378,7 +452,9 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
 
                   {/* Destination Address */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Destination Address</label>
+                    <label className="text-sm font-medium">
+                      Destination Address
+                    </label>
                     <Input
                       type="text"
                       value={destinationAddress}
@@ -388,16 +464,18 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
                   </div>
 
                   {/* Withdrawal Info */}
-                  {selectedWallet.type === 'platform' ? (
+                  {selectedWallet.type === "platform" ? (
                     <div className="p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
                       <p className="text-sm text-blue-800 dark:text-blue-200">
-                        <strong>Platform Wallet:</strong> Gas fees will be sponsored and deducted from your USDC balance.
+                        <strong>Platform Wallet:</strong> Gas fees will be
+                        sponsored and deducted from your USDC balance.
                       </p>
                     </div>
                   ) : (
                     <div className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
                       <p className="text-sm text-orange-800 dark:text-orange-200">
-                        <strong>Personal Wallet:</strong> You will pay transaction fees in SOL from your wallet.
+                        <strong>Personal Wallet:</strong> You will pay
+                        transaction fees in SOL from your wallet.
                       </p>
                     </div>
                   )}
@@ -406,7 +484,9 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
 
               {error && (
                 <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
-                  <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+                  <p className="text-sm text-red-800 dark:text-red-200">
+                    {error}
+                  </p>
                 </div>
               )}
             </>
@@ -423,7 +503,9 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
             </Button>
             <Button
               onClick={handleWithdraw}
-              disabled={!validation.isValid || submitting || walletBalances.length === 0}
+              disabled={
+                !validation.isValid || submitting || walletBalances.length === 0
+              }
               className="w-full sm:w-auto flex items-center gap-2"
             >
               {submitting ? (
@@ -438,7 +520,9 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
           </DialogFooter>
 
           {validation.error && (
-            <p className="text-xs text-red-600 text-center">{validation.error}</p>
+            <p className="text-xs text-red-600 text-center">
+              {validation.error}
+            </p>
           )}
         </div>
       </DialogContent>

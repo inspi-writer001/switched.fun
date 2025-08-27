@@ -30,16 +30,16 @@ export interface WithdrawalParams {
   connection: Connection;
   program?: any; // Anchor program instance (for platform withdrawals)
   civicWallet?: any; // Civic wallet for normal withdrawals
+  userContext?: any; // Civic user context for platform withdrawals
 }
 
-export class WithdrawalService {
-  /**
-   * Estimates gas fee in SOL for a transaction
-   */
-  static async estimateGasFee(
-    connection: Connection,
-    transaction: Transaction
-  ): Promise<number> {
+/**
+ * Estimates gas fee in SOL for a transaction
+ */
+export async function estimateGasFee(
+  connection: Connection,
+  transaction: Transaction
+): Promise<number> {
     try {
       const { blockhash } = await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
@@ -49,112 +49,114 @@ export class WithdrawalService {
       );
       
       return (feeEstimate.value || 0) / LAMPORTS_PER_SOL;
-    } catch (error) {
-      console.error("Error estimating gas fee:", error);
-      return 0.001; // Fallback estimate
-    }
+  } catch (error) {
+    console.error("Error estimating gas fee:", error);
+    return 0.001; // Fallback estimate
   }
+}
 
-  /**
-   * Converts SOL amount to USDC amount
-   */
-  static convertSolToUsdc(solAmount: number, solPrice: number, usdcPrice: number = 1): number {
-    const usdValue = solAmount * solPrice;
-    return usdValue / usdcPrice;
-  }
+/**
+ * Converts SOL amount to USDC amount
+ */
+export function convertSolToUsdc(solAmount: number, solPrice: number, usdcPrice: number = 1): number {
+  const usdValue = solAmount * solPrice;
+  return usdValue / usdcPrice;
+}
 
-  /**
-   * Handles platform wallet withdrawal using program.methods.withdraw
-   */
-  static async withdrawFromPlatformWallet(params: WithdrawalParams, solPrice: number): Promise<string> {
-    const { amount, destinationAddress, userAddress, connection, program } = params;
-    
-    if (!program) {
-      throw new Error("Program instance required for platform withdrawal");
-    }
+/**
+ * Handles platform wallet withdrawal using server-broadcast pattern (like createStreamer)
+ */
+export async function withdrawFromPlatformWallet(params: WithdrawalParams, solPrice: number): Promise<string> {
+    const { amount, destinationAddress, userAddress, userContext } = params;
     
     try {
-      const userPubkey = new PublicKey(userAddress);
-      
-      // Calculate streamer state PDA (user state)
-      const [streamerState] = PublicKey.findProgramAddressSync(
-        [Buffer.from("user"), userPubkey.toBuffer()],
-        program.programId
-      );
-
-      // Calculate global state PDA
-      const [globalState] = PublicKey.findProgramAddressSync(
-        [Buffer.from("global_state")],
-        program.programId
-      );
-
-      // Calculate treasury account PDA  
-      const [treasuryAccount] = PublicKey.findProgramAddressSync(
-        [globalState.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), USDC_MINT.toBuffer()],
-        ASSOCIATED_TOKEN_PROGRAM_ID
-      );
-
-      // Calculate streamer ATA (platform wallet USDC account)
-      const [streamerAta] = PublicKey.findProgramAddressSync(
-        [streamerState.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), USDC_MINT.toBuffer()],
-        ASSOCIATED_TOKEN_PROGRAM_ID
-      );
-
-      // Get destination ATA
-      const destinationPubkey = new PublicKey(destinationAddress);
-      const destinationATA = await getAssociatedTokenAddress(
-        USDC_MINT,
-        destinationPubkey
-      );
-
       // Estimate gas fee and convert to USDC
       const gasInSol = 0.001; // Conservative estimate for withdraw instruction
-      const gasInUsdc = this.convertSolToUsdc(gasInSol, solPrice);
-      const gasInUsdcBaseUnits = new BN(Math.ceil(gasInUsdc * Math.pow(10, USDC_DECIMALS)));
+      const gasInUsdc = convertSolToUsdc(gasInSol, solPrice);
       
       console.log("Platform withdrawal details:", {
         amount,
         gasInSol,
         gasInUsdc,
-        gasInUsdcBaseUnits: gasInUsdcBaseUnits.toString(),
-        streamerState: streamerState.toString(),
-        streamerAta: streamerAta.toString(),
-        destinationATA: destinationATA.toString(),
+        destinationAddress,
+        userAddress,
       });
 
-      // Execute withdrawal using Anchor program - same pattern as tipping
-      const tx = await program.methods
-        .withdraw({
-          amount: new BN(Math.floor(amount * Math.pow(10, USDC_DECIMALS))),
-          gasInUsdc: gasInUsdcBaseUnits,
-        })
-        .accounts({
-          signer: userPubkey,
-          receivingAta: destinationATA,
-          streamerAta: streamerAta,
-          tokenMint: USDC_MINT,
-          globalState: globalState,
-          treasuryAccount: treasuryAccount,
-          streamerState: streamerState,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        })
-        .rpc();
+      // Step 1: Create withdrawal transaction on server
+      const createResponse = await fetch('/api/wallet/platform/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount,
+          destinationAddress,
+          userPublicKey: userAddress,
+          gasInUsdc,
+        }),
+      });
 
-      console.log("Platform withdrawal successful:", tx);
-      return tx;
+      if (!createResponse.ok) {
+        const errorData = await createResponse.json();
+        throw new Error(errorData.message || 'Failed to create withdrawal transaction');
+      }
+
+      const { serializedTransaction } = await createResponse.json();
+
+      // Step 2: User signs the transaction using Civic wallet
+      if (!userContext?.solana?.wallet?.signTransaction) {
+        throw new Error('Civic wallet not available for signing');
+      }
+
+      console.log('Transaction ready for user signing');
+
+      const { Transaction } = await import('@solana/web3.js');
+      const transaction = Transaction.from(Buffer.from(serializedTransaction, 'base64'));
       
-    } catch (error) {
-      console.error("Platform withdrawal error:", error);
-      throw error;
-    }
-  }
+      console.log('Transaction before user signing:', {
+        feePayer: transaction.feePayer?.toString(),
+        requiredSigners: transaction.instructions.flatMap(ix => 
+          ix.keys.filter(k => k.isSigner).map(k => k.pubkey.toString())
+        ),
+      });
+      
+      const signedTransaction = await userContext.solana.wallet.signTransaction(transaction);
+      
+      console.log('Transaction after user signing:', {
+        signatures: signedTransaction.signatures.map(sig => ({
+          publicKey: sig.publicKey?.toString(),
+          signature: sig.signature ? 'present' : 'missing'
+        }))
+      });
 
-  /**
-   * Handles normal wallet withdrawal using direct SPL transfer
-   */
-  static async withdrawFromNormalWallet(params: WithdrawalParams): Promise<string> {
+      // Step 3: Send signed transaction back to server for broadcasting
+      const completeResponse = await fetch('/api/wallet/platform/withdraw', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userSignedTransaction: Buffer.from(signedTransaction.serialize()).toString('base64'),
+          userPublicKey: userAddress,
+        }),
+      });
+
+      if (!completeResponse.ok) {
+        const errorData = await completeResponse.json();
+        throw new Error(errorData.message || 'Failed to complete withdrawal');
+      }
+
+      const result = await completeResponse.json();
+      console.log('Platform withdrawal completed:', result);
+
+      return result.signature;
+      
+  } catch (error) {
+    console.error("Platform withdrawal error:", error);
+    throw error;
+  }
+}
+
+/**
+ * Handles normal wallet withdrawal using direct SPL transfer
+ */
+export async function withdrawFromNormalWallet(params: WithdrawalParams): Promise<string> {
     const { amount, destinationAddress, userAddress, connection, civicWallet } = params;
     
     if (!civicWallet || !civicWallet.signTransaction) {
@@ -248,20 +250,19 @@ export class WithdrawalService {
       console.log("Normal wallet withdrawal successful:", signature);
       return signature;
       
-    } catch (error) {
-      console.error("Normal wallet withdrawal error:", error);
-      throw error;
-    }
+  } catch (error) {
+    console.error("Normal wallet withdrawal error:", error);
+    throw error;
   }
+}
 
-  /**
-   * Main withdrawal method that routes to appropriate handler
-   */
-  static async withdraw(params: WithdrawalParams, solPrice: number): Promise<string> {
-    if (params.walletType === 'platform') {
-      return this.withdrawFromPlatformWallet(params, solPrice);
-    } else {
-      return this.withdrawFromNormalWallet(params);
-    }
+/**
+ * Main withdrawal method that routes to appropriate handler
+ */
+export async function withdraw(params: WithdrawalParams, solPrice: number): Promise<string> {
+  if (params.walletType === 'platform') {
+    return withdrawFromPlatformWallet(params, solPrice);
+  } else {
+    return withdrawFromNormalWallet(params);
   }
 }
