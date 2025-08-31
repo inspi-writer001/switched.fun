@@ -88,22 +88,23 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between">
-          <h1 className="text-3xl font-display mb-8">Streaming Dashboard</h1>
-          {/* Header with QR trigger */}
-          <div className="flex justify-between items-center mb-8">
-            <button
-              onClick={() => setIsOpen(true)}
-              disabled={!hasWallet}
-              className="inline-flex items-center px-4 py-2 bg-slate-900 text-white rounded-md disabled:opacity-50"
-            >
-              <Wallet className="w-4 h-4 mr-2" />
-              Deposit
-            </button>
+        {/* Header with improved layout */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div className="text-2xl sm:text-3xl text-primary font-bold">
+            Streaming Dashboard
           </div>
+          <button
+            onClick={() => setIsOpen(true)}
+            disabled={!hasWallet}
+            className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg disabled:opacity-50 hover:opacity-90 transition-all"
+          >
+            <Wallet className="w-4 h-4 mr-2" />
+            Deposit
+          </button>
+        </div>
 
-          {/* Modal with QR code */}
-          <Modal
+        {/* Modal with QR code */}
+        <Modal
             isOpen={isOpen}
             onRequestClose={() => setIsOpen(false)}
             contentLabel="Deposit to Wallet"
@@ -177,15 +178,14 @@ const Profile = () => {
 
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-full py-3 px-6 bg-gradient-to-r from-primary to-secondary rounded-lg text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
+                className="w-full py-3 px-6 bg-primary rounded-lg text-primary-foreground font-semibold hover:opacity-90 transition-opacity"
               >
                 Close
               </button>
             </div>
           </Modal>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
           {/* Token Balance Card */}
           <TokenBalance />
 
@@ -198,47 +198,49 @@ const Profile = () => {
 
         {/* Charts and Data */}
         <Tabs defaultValue="donations" className="mb-6">
-          <TabsList className="grid grid-cols-3 mb-4">
-            <TabsTrigger value="donations" className="flex items-center">
-              <ChartPie className="w-4 h-4 mr-2" />
-              <span>Donation Stats</span>
+          <TabsList className="grid grid-cols-1 sm:grid-cols-3 mb-4 h-auto p-1 bg-transparent border border-border/50">
+            <TabsTrigger value="donations" className="flex items-center justify-center gap-2 px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <ChartPie className="w-4 h-4" />
+              <span className="hidden sm:inline">Donation Stats</span>
+              <span className="sm:hidden">Donations</span>
             </TabsTrigger>
-            <TabsTrigger value="streams" className="flex items-center">
-              <TrendingUp className="w-4 h-4 mr-2" />
-              <span>Stream Performance</span>
+            <TabsTrigger value="streams" className="flex items-center justify-center gap-2 px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <TrendingUp className="w-4 h-4" />
+              <span className="hidden sm:inline">Stream Performance</span>
+              <span className="sm:hidden">Streams</span>
             </TabsTrigger>
-            <TabsTrigger value="viewers" className="flex items-center">
-              <Users className="w-4 h-4 mr-2" />
-              <span>Viewer Analytics</span>
+            <TabsTrigger value="viewers" className="flex items-center justify-center gap-2 px-3 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Viewer Analytics</span>
+              <span className="sm:hidden">Viewers</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="donations" className="space-y-6">
-            <Card className="p-4">
-              <h2 className="text-xl font-semibold mb-4">Donation Analytics</h2>
-
-              {/* <-- Swap in DonationChart here (with period) --> */}
+          <TabsContent value="donations" className="space-y-4 sm:space-y-6">
+            <Card className="p-4 sm:p-6 bg-transparent border border-border/50">
+              <div className="text-lg sm:text-xl text-primary font-bold mb-4 sm:mb-6">Donation Analytics</div>
               <DonationChart period={selectedPeriod} />
             </Card>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <RecentTips />
               <TopDonors />
             </div>
           </TabsContent>
 
-          <TabsContent value="streams" className="space-y-6">
-            <Card className="p-4">
-              <h2 className="text-xl font-semibold mb-4">Stream Performance</h2>
-              <div className="h-[350px]">
-                <div className="text-center text-muted-foreground mt-16">
-                  Stream performance chart will be displayed here
+          <TabsContent value="streams" className="space-y-4 sm:space-y-6">
+            <Card className="p-4 sm:p-6 bg-transparent border border-border/50">
+              <div className="text-lg sm:text-xl text-primary font-bold mb-4 sm:mb-6">Stream Performance</div>
+              <div className="h-[300px] sm:h-[350px] flex items-center justify-center bg-transparent border border-border/30 rounded-lg">
+                <div className="text-center text-muted-foreground">
+                  <TrendingUp className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>Stream performance chart will be displayed here</p>
                 </div>
               </div>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="p-4">
-                <h2 className="text-xl font-semibold mb-4">Recent Streams</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <Card className="p-4 sm:p-6 bg-transparent border border-border/50">
+                <div className="text-lg sm:text-xl text-primary font-bold mb-4">Recent Streams</div>
                 <div className="space-y-4">
                   {[...Array(5)].map((_, i) => (
                     <div key={i} className="flex justify-between items-center">
@@ -261,10 +263,10 @@ const Profile = () => {
                 </div>
               </Card>
 
-              <Card className="p-4">
-                <h2 className="text-xl font-semibold mb-4">
+              <Card className="p-4 sm:p-6 bg-transparent border border-border/50">
+                <div className="text-lg sm:text-xl text-primary font-bold mb-4">
                   Stream Highlights
-                </h2>
+                </div>
                 <div className="space-y-4">
                   {[...Array(5)].map((_, i) => (
                     <div key={i} className="flex justify-between items-center">
@@ -289,33 +291,36 @@ const Profile = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="viewers" className="space-y-6">
-            <Card className="p-4">
-              <h2 className="text-xl font-semibold mb-4">
+          <TabsContent value="viewers" className="space-y-4 sm:space-y-6">
+            <Card className="p-4 sm:p-6 bg-transparent border border-border/50">
+              <div className="text-lg sm:text-xl text-primary font-bold mb-4 sm:mb-6">
                 Viewer Demographics
-              </h2>
-              <div className="h-[350px]">
-                <div className="text-center text-muted-foreground mt-16">
-                  Viewer demographics chart will be displayed here
+              </div>
+              <div className="h-[300px] sm:h-[350px] flex items-center justify-center bg-transparent border border-border/30 rounded-lg">
+                <div className="text-center text-muted-foreground">
+                  <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>Viewer demographics chart will be displayed here</p>
                 </div>
               </div>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="p-4">
-                <h2 className="text-xl font-semibold mb-4">Viewer Retention</h2>
-                <div className="h-[250px]">
-                  <div className="text-center text-muted-foreground mt-16">
-                    Viewer retention chart will be displayed here
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <Card className="p-4 sm:p-6 bg-transparent border border-border/50">
+                <div className="text-lg sm:text-xl text-primary font-bold mb-4">Viewer Retention</div>
+                <div className="h-[200px] sm:h-[250px] flex items-center justify-center bg-transparent border border-border/30 rounded-lg">
+                  <div className="text-center text-muted-foreground">
+                    <TrendingUp className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Viewer retention chart will be displayed here</p>
                   </div>
                 </div>
               </Card>
 
-              <Card className="p-4">
-                <h2 className="text-xl font-semibold mb-4">Viewer Growth</h2>
-                <div className="h-[250px]">
-                  <div className="text-center text-muted-foreground mt-16">
-                    Viewer growth chart will be displayed here
+              <Card className="p-4 sm:p-6 bg-transparent border border-border/50">
+                <div className="text-lg sm:text-xl text-primary font-bold mb-4">Viewer Growth</div>
+                <div className="h-[200px] sm:h-[250px] flex items-center justify-center bg-transparent border border-border/30 rounded-lg">
+                  <div className="text-center text-muted-foreground">
+                    <Users className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Viewer growth chart will be displayed here</p>
                   </div>
                 </div>
               </Card>

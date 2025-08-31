@@ -196,7 +196,7 @@ export default function DonationChart({
   return (
     <div className="space-y-4">
       {/* Period Selector */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {(["day", "week", "month", "year"] as const).map((p) => (
           <Button
             key={p}
@@ -204,7 +204,9 @@ export default function DonationChart({
             size="sm"
             onClick={() => setPeriod(p)}
             className={
-              period === p ? "bg-slate-900 text-white hover:bg-slate-800" : ""
+              period === p 
+                ? "bg-primary text-primary-foreground hover:opacity-90 border-0" 
+                : "border-border hover:bg-accent hover:text-accent-foreground"
             }
           >
             {p.charAt(0).toUpperCase() + p.slice(1)}

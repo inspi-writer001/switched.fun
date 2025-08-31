@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Wallet, ArrowDownCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import WithdrawModal from "./WithdrawModal";
 import { userHasWallet } from "@civic/auth-web3";
 import { useUser } from "@civic/auth-web3/react";
 import {
@@ -47,6 +48,7 @@ export default function TokenBalance() {
   const [splTokens, setSplTokens] = useState<TokenInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
 
   // —————————————————————————
   // 5️⃣ Fetch balances when address changes
@@ -111,9 +113,9 @@ export default function TokenBalance() {
   // ——————————————
   return (
     <Card className="overflow-hidden">
-      <div className="bg-slate-900 py-2 px-4">
-        <span className="text-white text-sm font-medium">
-          My Wallet Balance ({network})
+      <div className="bg-transparent py-2 px-4 w-full border-b">
+        <span className="text-white text-sm font-medium mt-2  w-full">
+          Wallet Balance ({network})
         </span>
       </div>
       <CardContent className="p-4">
@@ -148,6 +150,7 @@ export default function TokenBalance() {
                 size="sm"
                 variant="outline"
                 className="flex items-center gap-1"
+                onClick={() => setShowWithdrawModal(true)}
               >
                 <ArrowDownCircle className="h-4 w-4" />
                 <span>Withdraw</span>
@@ -177,6 +180,11 @@ export default function TokenBalance() {
           </>
         )}
       </CardContent>
+      
+      <WithdrawModal 
+        open={showWithdrawModal} 
+        setOpen={setShowWithdrawModal} 
+      />
     </Card>
   );
 }
