@@ -51,7 +51,8 @@ export async function GET(request: NextRequest) {
             data: {
               externalUserId: self.id,
               username: "", // Empty username - will be set in profile modal
-              imageUrl: self.profilePictureUrl || "https://i.postimg.cc/wxGCZ9Qy/Frame-12.png", // Use Civic profile picture or default
+              imageUrl:
+                self.picture || "https://i.postimg.cc/wxGCZ9Qy/Frame-12.png", // Use Civic profile picture or default
               stream: {
                 create: {
                   name: "New Stream", // Temporary name
@@ -81,7 +82,10 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json(newUser);
       } catch (createError: any) {
-        console.error("[GET /api/user/me] Failed to create new user:", createError);
+        console.error(
+          "[GET /api/user/me] Failed to create new user:",
+          createError
+        );
         return NextResponse.json(
           { error: "Failed to create user profile" },
           { status: 500 }
@@ -89,13 +93,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Check if existing user needs platform wallet creation  
+    // Check if existing user needs platform wallet creation
     if (user && !user.isSolanaPlatformWallet) {
       // Add a flag to response indicating platform wallet setup is needed
       return NextResponse.json({
         ...user,
         needsPlatformWallet: true,
-        message: "Platform wallet setup required for full functionality"
+        message: "Platform wallet setup required for full functionality",
       });
     }
 

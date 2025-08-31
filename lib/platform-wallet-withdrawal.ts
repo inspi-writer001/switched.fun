@@ -11,6 +11,7 @@ import {
   getServerWallet,
   signAndSendTransaction,
 } from "./server-wallet";
+import { AnchorError } from "@coral-xyz/anchor";
 
 const USDC_MINT = new PublicKey("2o39Cm7hzaXmm9zGGGsa5ZiveJ93oMC2D6U7wfsREcCo");
 const USDC_DECIMALS = 6;
@@ -70,18 +71,18 @@ export const generateWithdrawalTransaction = async (
         tokenMint: USDC_MINT,
         tokenProgram: TOKEN_PROGRAM_ID,
       });
-    
+
     console.log("About to call .transaction() on withdraw method...");
-    
+
     let tx;
     try {
       tx = await withdrawBuilder.transaction();
       console.log("Successfully created withdraw transaction");
     } catch (error) {
+      let n_error = error as AnchorError;
       console.error("Error details:", {
-        message: error.message,
-        code: error.code,
-        logs: error.logs
+        message: n_error.message,
+        logs: n_error.logs,
       });
       throw error;
     }
@@ -140,7 +141,7 @@ export const broadcastWithdrawalTransaction = async (
       const isValid = transaction.verifySignatures();
       console.log("Transaction signature verification:", isValid);
     } catch (verifyError) {
-      console.log("Signature verification error:", verifyError.message);
+      console.log("Signature verification error:", verifyError);
     }
 
     // Transaction should already be fully signed, just broadcast it

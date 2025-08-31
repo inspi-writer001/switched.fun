@@ -3,7 +3,8 @@
 import { useMemo } from "react";
 import * as anchor from "@coral-xyz/anchor";
 import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
-import { useUser, userHasWallet } from "@civic/auth-web3";
+import { userHasWallet } from "@civic/auth-web3";
+import { useUser } from "@civic/auth-web3/react";
 
 // Program ID
 const PROGRAM_ID = new PublicKey("swinS25mqCw6ExEAtLJFxp6HYcqMvoYxKz3by6FfbRD");
@@ -22,7 +23,7 @@ export function useProgram() {
 
   const network =
     process.env.NEXT_PUBLIC_USE_MAINNET === "true" ? "mainnet-beta" : "devnet";
-  
+
   const connection = useMemo(
     () => new Connection(clusterApiUrl(network)),
     [network]

@@ -22,7 +22,7 @@ import { Wallet, ArrowDownCircle } from "lucide-react";
 import { usePrices } from "./usePrices";
 import { withdraw } from "./withdrawalService";
 import { getProgram } from "@/utils/program";
-import { Wallet as WalletType } from "@coral-xyz/anchor";
+// import { Wallet as WalletType } from "@coral-xyz/anchor";
 import { toast } from "sonner";
 
 // USDC Token mint (6 decimals)
@@ -279,10 +279,7 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
 
         try {
           const solPrice = prices.sol || 100; // Fallback to $100 if price not available
-          const signature = await withdraw(
-            withdrawalParams,
-            solPrice
-          );
+          const signature = await withdraw(withdrawalParams, solPrice);
 
           console.log("Withdrawal successful:", signature);
           toast.success("Withdrawal successful!", {
@@ -299,7 +296,9 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
         // For normal wallet withdrawals, use Civic wallet for signing
         const civicWallet = {
           publicKey: new PublicKey(userAddress),
+          // @ts-ignore
           signTransaction: userContext.solana?.signTransaction,
+          // @ts-ignore
           signAllTransactions: userContext.solana?.signAllTransactions,
         };
         withdrawalParams.civicWallet = civicWallet;
@@ -309,10 +308,7 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
 
         try {
           const solPrice = prices.sol || 100; // Fallback to $100 if price not available
-          const signature = await withdraw(
-            withdrawalParams,
-            solPrice
-          );
+          const signature = await withdraw(withdrawalParams, solPrice);
 
           console.log("Withdrawal successful:", signature);
           toast.success("Withdrawal successful!", {
@@ -342,6 +338,7 @@ export default function WithdrawModal({ open, setOpen }: WithdrawModalProps) {
     connection,
     prices.sol,
     hasWallet,
+    // @ts-ignore
     userContext.solana,
     wallet,
     setOpen,

@@ -82,7 +82,7 @@ export const broadcastPlatformWalletTransaction = async (
     try {
       const isValid = transaction.verifySignatures();
       console.log('Transaction signature verification:', isValid);
-    } catch (verifyError) {
+    } catch (verifyError: any) {
       console.log('Signature verification error:', verifyError.message);
     }
     
@@ -277,6 +277,36 @@ export const getUserPlatformWallet = async (userId: string): Promise<string | nu
   } catch (error) {
     console.error('Failed to get user platform wallet:', error);
     return null;
+  }
+};
+
+// Create/get user platform wallet (database only - for existing wallets)
+export const createUserPlatformWallet = async (userId: string): Promise<{
+  platformWallet: string;
+}> => {
+  try {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { 
+        platformWallet: true, 
+        isSolanaPlatformWallet: true 
+      },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (!user.isSolanaPlatformWallet || !user.platformWallet) {
+      throw new Error('User does not have a platform wallet. Use createUserPlatformWalletTransaction to create one.');
+    }
+
+    return {
+      platformWallet: user.platformWallet,
+    };
+  } catch (error) {
+    console.error('Failed to get user platform wallet:', error);
+    throw error;
   }
 };
 
