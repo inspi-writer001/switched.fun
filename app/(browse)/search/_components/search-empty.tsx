@@ -13,9 +13,10 @@ export const SearchEmpty = ({ term }: SearchEmptyProps) => {
       <div className="text-center space-y-2">
         <h3 className="text-lg font-semibold">No results found</h3>
         <p className="text-sm text-muted-foreground max-w-md">
-          We couldn't find any users matching &quot;{term}&quot;. Try searching with different keywords or check your spelling.
+          We could not find any users matching &quot;{term}&quot;. Try searching
+          with different keywords or check your spelling.
         </p>
       </div>
     </div>
   );
-}; 
+};
