@@ -24,16 +24,22 @@ interface ActivatePlatformWalletModalProps {
 }
 
 export const ActivatePlatformWalletModal = React.memo(
-  ({ open, setOpen, currentUser, onSuccess }: ActivatePlatformWalletModalProps) => {
+  ({
+    open,
+    setOpen,
+    currentUser,
+    onSuccess,
+  }: ActivatePlatformWalletModalProps) => {
     const userContext = useUser();
     const hasWallet = userHasWallet(userContext);
-    const solanaWallet = hasWallet && userContext.solana ? userContext.solana.address : undefined;
-    
+    const solanaWallet =
+      hasWallet && userContext.solana ? userContext.solana.address : undefined;
+
     const [isActivating, setIsActivating] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const handleActivatePlatformWallet = useCallback(async () => {
-      if (!solanaWallet || !userContext.solana) {
+      if (!solanaWallet) {
         setError("Please connect your wallet first");
         return;
       }
@@ -42,98 +48,114 @@ export const ActivatePlatformWalletModal = React.memo(
       setError(null);
 
       try {
-        console.log('User wallet address:', solanaWallet);
-        console.log('Wallet context address:', userContext.solana.address);
-        
+        console.log("User wallet address:", solanaWallet);
+        // console.log('Wallet context address:', userContext?.solana?.address);
+
         // Step 1: Create platform wallet transaction
-        const createResponse = await fetch('/api/wallet/platform', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const createResponse = await fetch("/api/wallet/platform", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            tokenMint: '2o39Cm7hzaXmm9zGGGsa5ZiveJ93oMC2D6U7wfsREcCo', // Your token mint
+            tokenMint: "2o39Cm7hzaXmm9zGGGsa5ZiveJ93oMC2D6U7wfsREcCo", // Your token mint
             userPublicKey: solanaWallet,
           }),
         });
 
         if (!createResponse.ok) {
-          throw new Error('Failed to create platform wallet transaction');
+          throw new Error("Failed to create platform wallet transaction");
         }
 
         const { serializedTransaction } = await createResponse.json();
 
         // Step 2: Access the actual wallet for signing
-        console.log('Civic context structure:', {
-          solana: Object.keys(userContext.solana || {}),
-          wallet: userContext.solana.wallet ? Object.keys(userContext.solana.wallet) : 'No wallet property'
-        });
+        // console.log('Civic context structure:', {
+        //   solana: Object.keys(userContext.solana || {}),
+        //   wallet: userContext.solana.wallet ? Object.keys(userContext.solana.wallet) : 'No wallet property'
+        // });
 
         // The actual wallet signing methods are on userContext.solana.wallet
-        const wallet = userContext.solana.wallet;
+        // @ts-ignore
+        const wallet = userContext?.solana.wallet;
         if (!wallet) {
-          throw new Error('No wallet available for signing');
+          throw new Error("No wallet available for signing");
         }
 
-        console.log('Wallet methods:', Object.keys(wallet));
+        console.log("Wallet methods:", Object.keys(wallet));
 
         // Temporarily close our modal to allow Civic modal to be interactive
         setOpen(false);
 
         // Try to sign the transaction using the wallet
         let signedTransaction;
-        
+
         if (wallet.signTransaction) {
-          const { Transaction } = await import('@solana/web3.js');
-          const transaction = Transaction.from(Buffer.from(serializedTransaction, 'base64'));
-          
-          console.log('Transaction before user signing:');
-          console.log('- Fee payer:', transaction.feePayer?.toString());
-          console.log('- Required signers:', transaction.instructions.flatMap(ix => ix.keys.filter(k => k.isSigner).map(k => k.pubkey.toString())));
-          
+          const { Transaction } = await import("@solana/web3.js");
+          const transaction = Transaction.from(
+            Buffer.from(serializedTransaction, "base64")
+          );
+
+          console.log("Transaction before user signing:");
+          console.log("- Fee payer:", transaction.feePayer?.toString());
+          console.log(
+            "- Required signers:",
+            transaction.instructions.flatMap((ix) =>
+              ix.keys.filter((k) => k.isSigner).map((k) => k.pubkey.toString())
+            )
+          );
+
           signedTransaction = await wallet.signTransaction(transaction);
-          
-          console.log('Transaction after user signing:');
-          console.log('- Signatures:', signedTransaction.signatures.map(sig => ({
-            publicKey: sig.publicKey?.toString(),
-            signature: sig.signature ? 'present' : 'missing'
-          })));
-          
+
+          console.log("Transaction after user signing:");
+          // console.log('- Signatures:', signedTransaction.signatures.map(sig => ({
+          //   publicKey: sig.publicKey?.toString(),
+          //   signature: sig.signature ? 'present' : 'missing'
+          // })));
         } else if (wallet.signAllTransactions) {
-          const { Transaction } = await import('@solana/web3.js');
-          const transaction = Transaction.from(Buffer.from(serializedTransaction, 'base64'));
-          const signedTransactions = await wallet.signAllTransactions([transaction]);
+          const { Transaction } = await import("@solana/web3.js");
+          const transaction = Transaction.from(
+            Buffer.from(serializedTransaction, "base64")
+          );
+          const signedTransactions = await wallet.signAllTransactions([
+            transaction,
+          ]);
           signedTransaction = signedTransactions[0];
         } else {
-          throw new Error('Wallet does not support transaction signing. Available methods: ' + Object.keys(wallet).join(', '));
+          throw new Error(
+            "Wallet does not support transaction signing. Available methods: " +
+              Object.keys(wallet).join(", ")
+          );
         }
-        
+
         // Step 3: Send signed transaction back to platform for broadcasting
-        const completeResponse = await fetch('/api/wallet/platform', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+        const completeResponse = await fetch("/api/wallet/platform", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            userSignedTransaction: Buffer.from(signedTransaction.serialize()).toString('base64'),
+            userSignedTransaction: Buffer.from(
+              signedTransaction.serialize()
+            ).toString("base64"),
             userPublicKey: solanaWallet,
           }),
         });
 
         if (!completeResponse.ok) {
-          throw new Error('Failed to complete platform wallet activation');
+          throw new Error("Failed to complete platform wallet activation");
         }
 
         const result = await completeResponse.json();
-        console.log('Platform wallet activated:', result);
+        console.log("Platform wallet activated:", result);
 
         // Success! Modal is already closed, just trigger refresh
         onSuccess();
-        
       } catch (err: any) {
-        console.error('Platform wallet activation failed:', err);
-        setError(err.message || 'Failed to activate platform wallet');
+        console.error("Platform wallet activation failed:", err);
+        setError(err.message || "Failed to activate platform wallet");
         // Reopen modal to show error
         setOpen(true);
       } finally {
         setIsActivating(false);
       }
+      // @ts-ignore
     }, [solanaWallet, userContext.solana?.signTransaction, setOpen, onSuccess]);
 
     return (
@@ -146,19 +168,20 @@ export const ActivatePlatformWalletModal = React.memo(
               Activate Platform Wallet
             </DialogTitle>
             <DialogDescription className="text-center">
-              To enable full platform features like tipping and streaming rewards, 
-              you need to activate your platform wallet.
+              To enable full platform features like tipping and streaming
+              rewards, you need to activate your platform wallet.
             </DialogDescription>
           </DialogHeader>
 
           <div className="py-4 space-y-4">
-
             <div className="space-y-3">
               <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                 <Shield className="w-5 h-5 text-blue-500" />
                 <div className="text-sm">
                   <div className="font-medium">Secure & Free</div>
-                  <div className="text-muted-foreground">You sign, we broadcast</div>
+                  <div className="text-muted-foreground">
+                    You sign, we broadcast
+                  </div>
                 </div>
               </div>
 
@@ -166,7 +189,9 @@ export const ActivatePlatformWalletModal = React.memo(
                 <Zap className="w-5 h-5 text-green-500" />
                 <div className="text-sm">
                   <div className="font-medium">No Gas Fees</div>
-                  <div className="text-muted-foreground">Platform covers transaction costs</div>
+                  <div className="text-muted-foreground">
+                    Platform covers transaction costs
+                  </div>
                 </div>
               </div>
             </div>
