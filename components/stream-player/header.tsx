@@ -10,6 +10,7 @@ import { toast, Toaster } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VerifiedMark } from "@/components/verified-mark";
 import { UserAvatar, UserAvatarSkeleton } from "@/components/user-avatar";
+import { useUser } from "@civic/auth-web3/react";
 
 import { Actions, ActionsSkeleton } from "./actions";
 // import WalletQRButton from "../tip-me/WalletQRButton";
@@ -34,6 +35,7 @@ export const Header = ({
 }: HeaderProps) => {
   const participants = useParticipants();
   const participant = useRemoteParticipant(hostIdentity);
+  const { user: currentUser } = useUser();
 
   const isLive = !!participant;
   const participantCount = participants.length - 1;
@@ -79,16 +81,16 @@ export const Header = ({
           <UserAvatar
             imageUrl={imageUrl}
             username={hostName}
-            size="lg"
+            size="md"
             isLive={isLive}
             showBadge
           />
           <div className="space-y-1">
             <div className="flex items-center gap-x-2">
-              <h2 className="text-lg font-semibold">{hostName}</h2>
+              <h2 className="text-lg font-semibold font-sans">{hostName}</h2>
               <VerifiedMark />
             </div>
-            <p className="text-sm font-semibold">{name}</p>
+            {/* <p className="text-sm font-semibold">{name}</p> */}
             {isLive ? (
               <div className="font-semibold flex gap-x-1 items-center text-xs text-rose-500">
                 <UserIcon className="h-4 w-4" />
@@ -109,7 +111,7 @@ export const Header = ({
         <div className="flex items-center gap-x-2">
           <Button
             onClick={handleShareClick}
-            variant="primary"
+            variant="outline"
             size="sm"
             className="flex items-center"
           >
@@ -119,11 +121,15 @@ export const Header = ({
         </div>
         {/* ←––– End Share button –––→ */}
         {/* ←––– End Share button –––→ */}
-        <Actions
-          isFollowing={isFollowing}
-          hostIdentity={hostIdentity}
-          isHost={isHost}
-        />
+        {
+          !!currentUser && (
+            <Actions
+              isFollowing={isFollowing}
+              hostIdentity={hostIdentity}
+              isHost={isHost}
+            />
+          )
+        }
       </div>
     </>
   );

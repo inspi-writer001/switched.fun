@@ -45,7 +45,8 @@ export const generateWithdrawalTransaction = async (
       connection,
       serverWallet,
       USDC_MINT,
-      destinationAddress
+      destinationAddress,
+      true
     );
     const destinationAta = destinationAtaAccount.address;
 
@@ -171,14 +172,6 @@ export const createWithdrawalTransaction = async (
     // Convert string addresses to PublicKey objects
     const userPubKey = new PublicKey(userPublicKey);
     const destinationPubKey = new PublicKey(destinationAddress);
-
-    console.log("Creating withdrawal transaction:", {
-      userId,
-      userPublicKey,
-      amount,
-      destinationAddress,
-      gasInUsdc,
-    });
 
     // Generate the transaction for user to sign
     const result = await generateWithdrawalTransaction(

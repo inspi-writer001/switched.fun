@@ -1,23 +1,23 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { X } from "lucide-react";
 import { useUser, useWallet } from "@civic/auth-web3/react";
 import { toast } from "sonner";
 import { getProgram } from "@/utils/program";
-import { Connection, PublicKey } from "@solana/web3.js";
-import {
-  TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
-  getAccount,
-  getMint,
-} from "@solana/spl-token";
+import { PublicKey } from "@solana/web3.js";
+import { getAssociatedTokenAddress } from "@solana/spl-token";
 import { Wallet } from "@coral-xyz/anchor";
 import { BN } from "bn.js";
 import Image from "next/image";
-import { QRCodeSVG } from "qrcode.react";
-import { truncateBetween } from "@/utils/helpers";
-import { allGifts, Gift } from "./gift-items";
+import { allGifts } from "./gift-items";
+import { GiftMode, useChatSidebar } from "@/store/use-chat-sidebar";
+import { connection, supportedTokens } from "@/config/wallet";
+import { fetchStreamerAta, fetchBalance } from "@/utils/wallet";
+import { FundWallet } from "./fund-wallet";
+import { useBalance, useCurrentUserAta } from "@/hooks/use-balance";
+import { getServerWallet } from "@/lib/server-wallet";
+import { withdraw } from "@/app/(dashboard)/u/[username]/profile/_components/withdrawalService";
+import { userHasWallet } from "@civic/auth-web3";
 
 interface TipComponentProps {
   hostIdentity: string;
@@ -26,28 +26,23 @@ interface TipComponentProps {
   onSendTip?: (amount: number) => void;
 }
 
-const connection = new Connection("https://api.devnet.solana.com", "confirmed");
-const supportedTokens = {
-  name: "USDC",
-  symbol: "usdc",
-  contractAddress: "2o39Cm7hzaXmm9zGGGsa5ZiveJ93oMC2D6U7wfsREcCo",
-  decimals: 6,
-};
-
 export const TipComponent = ({
   hostIdentity,
   hostWalletAddress,
   onClose,
   onSendTip,
 }: TipComponentProps) => {
-  const [mode, setMode] = useState<"qr" | "gift">("qr");
+  const { giftMode } = useChatSidebar((state) => state);
   const [selectedAmount, setSelectedAmount] = useState(5);
   const [customAmount, setCustomAmount] = useState(5);
-  const [selectedToken, setSelectedToken] = useState(supportedTokens.symbol);
-  const [balance, setBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [streamerAtaAddress, setStreamerAtaAddress] = useState<string>("");
+  const userContext = useUser();
+  const hasWallet = userHasWallet(userContext);
+  const userAddress = hasWallet ? userContext.solana.address : "";
+
+  const { data: currentUserAta } = useCurrentUserAta();
 
   // Gift states
   const [selectedFilter, setSelectedFilter] = useState<"all" | "affordable">(
@@ -55,9 +50,12 @@ export const TipComponent = ({
   );
   const [selectedGift, setSelectedGift] = useState<string | null>(null);
 
-  const userContext = useUser();
   const { wallet, address: solAddress } = useWallet({ type: "solana" });
   const address = solAddress || "";
+
+  const { data: balance, isLoading: balanceLoading } = useBalance(
+    currentUserAta?.streamerAta
+  );
 
   const tipAmounts = [5, 10, 20, 50, 100, 1000];
 
@@ -78,12 +76,22 @@ export const TipComponent = ({
       return;
     }
 
+    console.log("address", address);
+    console.log("wallet", wallet);
+    console.log("currentUserAta", currentUserAta);
+    console.log("balance", balance);
+    console.log("hostWalletAddress", hostWalletAddress);
+    console.log("customAmount", customAmount);
+    console.log("selectedAmount", selectedAmount);
+    console.log("selectedGift", selectedGift);
+    console.log("currentUserAta", currentUserAta);
+
     if (!hostWalletAddress) {
       toast.error("Streamer wallet address not available");
       return;
     }
 
-    if (customAmount <= 0 || customAmount > balance) {
+    if (customAmount <= 0 || customAmount > (balance || 0)) {
       toast.error("Invalid tip amount");
       return;
     }
@@ -96,14 +104,9 @@ export const TipComponent = ({
         if (!tokenInfo) throw new Error("Unsupported token");
 
         const tokenMint = new PublicKey(tokenInfo.contractAddress);
-        const tipAmount = new BN(
-          customAmount * Math.pow(10, tokenInfo.decimals)
-        );
+        const tipAmount = customAmount;
 
-        const signerAta = await getAssociatedTokenAddress(
-          tokenMint,
-          new PublicKey(address)
-        );
+        // const signerAta = currentUserAta?.streamerAta || "";
 
         const [streamerStatePDA] = PublicKey.findProgramAddressSync(
           [Buffer.from("user"), new PublicKey(hostWalletAddress).toBuffer()],
@@ -116,34 +119,35 @@ export const TipComponent = ({
           true
         );
 
-        const [globalStatePDA] = PublicKey.findProgramAddressSync(
-          [Buffer.from("global_state")],
-          program.programId
-        );
+        // const [globalStatePDA] = PublicKey.findProgramAddressSync(
+        //   [Buffer.from("global_state")],
+        //   program.programId
+        // );
 
-        const tx = await program.methods
-          .tipUser({
-            amount: tipAmount,
-            streamerAccount: new PublicKey(hostWalletAddress),
-          })
-          .accounts({
-            signer: address,
-            signerAta: signerAta,
-            streamerAta: streamerAta,
-            tokenMint: tokenMint,
-            // streamerState: streamerStatePDA,
-            // globalState: globalStatePDA,
-            tokenProgram: TOKEN_PROGRAM_ID,
-          })
-          .rpc();
+        let withdrawalParams: any = {
+          amount: tipAmount,
+          destinationAddress: streamerAta,
+          walletType: "platform",
+          userAddress: userAddress ?? '',
+          connection,
+        };
 
-        toast.success(
-          `Tip sent! ${customAmount} ${tokenInfo.symbol.toUpperCase()}`
-        );
+        withdrawalParams.userContext = userContext;
+
+        try {
+          const solPrice = 100; // TODO: fetch sol price from raydium or so
+          const signature = await withdraw(withdrawalParams, solPrice);
+
+          toast.success(`Tip sent! $${customAmount}`);
+        } catch (error: any) {
+          console.error("Tip error:", error?.message);
+          toast.error(`Failed to send tip: ${error.message}`);
+        }
+
         onSendTip?.(customAmount);
-        onClose?.();
+        // onClose?.();
       } catch (error: any) {
-        console.error("Tip error:", error);
+        console.error("Tip error:", error?.message);
         toast.error(`Failed to send tip: ${error.message}`);
       }
     });
@@ -165,124 +169,26 @@ export const TipComponent = ({
     return `${price}`;
   };
 
-  const handleSendGift = () => {
-    if (!selectedGift) return;
-
-    const gift = allGifts.find((g) => g.id === selectedGift);
-    if (!gift) return;
-
-    // For now, just show a toast - you can implement the actual gift sending logic
-    toast.success(`Sent ${gift.name} gift!`);
-    onClose?.();
-  };
-
-  // Calculate streamer's platform wallet ATA address
+  // TODO: Move this section to a hook and use useQuery - Calculate streamer's platform wallet ATA address
   useEffect(() => {
-    const calculateStreamerAta = async () => {
-      if (!hostWalletAddress) return;
+    async function fetchStreamerAtaAddress() {
+      if (!hostWalletAddress || !wallet) return;
 
-      try {
-        const program = getProgram(connection, wallet as unknown as Wallet);
-
-        const tokenMint = new PublicKey(supportedTokens.contractAddress);
-
-        // Calculate the streamer PDA (platform wallet)
-        const [streamerStatePDA] = PublicKey.findProgramAddressSync(
-          [Buffer.from("user"), new PublicKey(hostWalletAddress).toBuffer()],
-          program.programId
-        );
-
-        // Calculate the streamer's ATA for receiving tips
-        const streamerAta = await getAssociatedTokenAddress(
-          tokenMint,
-          streamerStatePDA,
-          true // allowOwnerOffCurve = true for PDA
-        );
-
-        setStreamerAtaAddress(streamerAta.toString());
-        console.log("Streamer platform wallet ATA:", streamerAta.toString());
-      } catch (error) {
-        console.error("Failed to calculate streamer ATA:", error);
+      const streamerAtaAddress = await fetchStreamerAta(
+        hostWalletAddress,
+        wallet
+      );
+      if (streamerAtaAddress) {
+        setStreamerAtaAddress(streamerAtaAddress);
       }
-    };
+    }
 
-    calculateStreamerAta();
-  }, [hostWalletAddress]);
-
-  // Fetch balance on component mount and token change
-  useEffect(() => {
-    if (!address || !wallet) return;
-    console.log(address);
-    console.log(hostWalletAddress);
-    console.log(hostIdentity);
-
-    const fetchBalance = async () => {
-      setIsLoading(true);
-      try {
-        const tokenInfo = supportedTokens;
-        if (!tokenInfo) return;
-
-        const tokenMint = new PublicKey(tokenInfo.contractAddress);
-        const ata = await getAssociatedTokenAddress(
-          tokenMint,
-          new PublicKey(address)
-        );
-
-        try {
-          const account = await getAccount(connection, ata);
-          const mintInfo = await getMint(connection, tokenMint);
-          const balance =
-            Number(account.amount) / Math.pow(10, mintInfo.decimals);
-          setBalance(balance);
-        } catch {
-          setBalance(0);
-        }
-      } catch (error) {
-        console.error("Failed to fetch balance:", error);
-        setBalance(0);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchBalance();
-  }, [address, wallet, selectedToken]);
+    fetchStreamerAtaAddress();
+  }, [hostWalletAddress, wallet]);
 
   return (
     <div className=" text-white w-full max-w-sm mx-auto h-full flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-700">
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setMode("qr")}
-            className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
-              mode === "qr"
-                ? "bg-red-600 text-white"
-                : "text-gray-400 hover:text-white hover:bg-gray-700"
-            }`}
-          >
-            Show QR
-          </button>
-          <button
-            onClick={() => setMode("gift")}
-            className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
-              mode === "gift"
-                ? "bg-red-600 text-white"
-                : "text-gray-400 hover:text-white hover:bg-gray-700"
-            }`}
-          >
-            Send Gift
-          </button>
-        </div>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-white transition-colors"
-        >
-          <X size={20} />
-        </button>
-      </div>
-
-      {mode === "qr" ? (
+      {giftMode === GiftMode.TIP ? (
         <>
           {/* Token Selector & Balance */}
           <div className="p-4 space-y-3">
@@ -300,7 +206,7 @@ export const TipComponent = ({
                   <span className="text-sm">
                     Balance:{" "}
                     <span className="text-green-400">
-                      {isLoading ? "Loading..." : `$${balance}`}
+                      {balanceLoading ? "Loading..." : `$${balance}`}
                     </span>
                   </span>
                 </div>
@@ -311,50 +217,10 @@ export const TipComponent = ({
           {/* QR Area */}
           <div className="flex-1 mb-o p-4 space-y-6 border-gray-700">
             {/* Platform Wallet QR Code */}
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <div className="text-sm text-gray-400 text-center">
-                Tip host from an external wallet?
-              </div>
-
-              {streamerAtaAddress ? (
-                <>
-                  <div className="bg-white p-4 rounded-lg">
-                    <QRCodeSVG
-                      value={streamerAtaAddress}
-                      size={128}
-                      bgColor="#000000"
-                      fgColor="#ffffff"
-                      level="M"
-                      // includeMargin={true}
-                      // marginSize={2}
-                    />
-                  </div>
-
-                  <div className="text-xs text-gray-400 text-center max-w-full break-all px-2">
-                    {truncateBetween(streamerAtaAddress)}
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(streamerAtaAddress);
-                      toast.success("Address copied to clipboard!");
-                    }}
-                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                  >
-                    Copy Address
-                  </button>
-                  <div className="text-xs bg-[#FE3C3E40] rounded-sm p-1 px-2 text-center">
-                    only send USDC on Solana network to this address
-                  </div>
-                </>
-              ) : (
-                <div className="bg-gray-800 p-4 rounded-lg flex items-center justify-center">
-                  <div className="text-gray-400 text-sm">
-                    Loading wallet address...
-                  </div>
-                </div>
-              )}
-            </div>
+            <FundWallet
+              walletAddress={streamerAtaAddress}
+              title="Tip host from an external wallet?"
+            />
           </div>
 
           {/* Bottom Section */}
@@ -417,7 +283,7 @@ export const TipComponent = ({
                 onClick={handleSendTip}
                 disabled={
                   customAmount <= 0 ||
-                  customAmount > balance ||
+                  customAmount > (balance || 0) ||
                   isPending ||
                   isLoading ||
                   !address ||
@@ -531,7 +397,7 @@ export const TipComponent = ({
                 onClick={handleSendTip}
                 disabled={
                   customAmount <= 0 ||
-                  customAmount > balance ||
+                  customAmount > (balance || 0) ||
                   isPending ||
                   isLoading ||
                   !address ||

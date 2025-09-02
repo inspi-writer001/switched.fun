@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { onFollow, onUnfollow } from "@/actions/follow";
 import { ChatVariant, useChatSidebar } from "@/store/use-chat-sidebar";
-import { DollarSign } from "lucide-react";
 
 interface ActionsProps {
   hostIdentity: string;
@@ -78,7 +77,7 @@ export const Actions = ({
       <Button
         disabled={isPending || isHost}
         onClick={toggleFollow}
-        variant="primary"
+        variant="outline"
         size="sm"
         className="w-full lg:w-auto"
       >
