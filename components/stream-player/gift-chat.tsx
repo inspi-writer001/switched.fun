@@ -18,6 +18,7 @@ import { useBalance, useCurrentUserAta } from "@/hooks/use-balance";
 import { getServerWallet } from "@/lib/server-wallet";
 import { withdraw } from "@/app/(dashboard)/u/[username]/profile/_components/withdrawalService";
 import { userHasWallet } from "@civic/auth-web3";
+import { fetchSolanaPrice, fetchSolanaPriceCached } from "@/utils/solana-price";
 
 interface TipComponentProps {
   hostIdentity: string;
@@ -35,7 +36,7 @@ export const TipComponent = ({
   const { giftMode } = useChatSidebar((state) => state);
   const [selectedAmount, setSelectedAmount] = useState(5);
   const [customAmount, setCustomAmount] = useState(5);
-  const [isLoading, setIsLoading] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [streamerAtaAddress, setStreamerAtaAddress] = useState<string>("");
   const userContext = useUser();
@@ -53,7 +54,7 @@ export const TipComponent = ({
   const { wallet, address: solAddress } = useWallet({ type: "solana" });
   const address = solAddress || "";
 
-  const { data: balance, isLoading: balanceLoading } = useBalance(
+  const { data: balance, isLoading } = useBalance(
     currentUserAta?.streamerAta
   );
 
@@ -76,16 +77,6 @@ export const TipComponent = ({
       return;
     }
 
-    console.log("address", address);
-    console.log("wallet", wallet);
-    console.log("currentUserAta", currentUserAta);
-    console.log("balance", balance);
-    console.log("hostWalletAddress", hostWalletAddress);
-    console.log("customAmount", customAmount);
-    console.log("selectedAmount", selectedAmount);
-    console.log("selectedGift", selectedGift);
-    console.log("currentUserAta", currentUserAta);
-
     if (!hostWalletAddress) {
       toast.error("Streamer wallet address not available");
       return;
@@ -106,8 +97,6 @@ export const TipComponent = ({
         const tokenMint = new PublicKey(tokenInfo.contractAddress);
         const tipAmount = customAmount;
 
-        // const signerAta = currentUserAta?.streamerAta || "";
-
         const [streamerStatePDA] = PublicKey.findProgramAddressSync(
           [Buffer.from("user"), new PublicKey(hostWalletAddress).toBuffer()],
           program.programId
@@ -118,12 +107,6 @@ export const TipComponent = ({
           streamerStatePDA,
           true
         );
-
-        // const [globalStatePDA] = PublicKey.findProgramAddressSync(
-        //   [Buffer.from("global_state")],
-        //   program.programId
-        // );
-
         let withdrawalParams: any = {
           amount: tipAmount,
           destinationAddress: streamerAta,
@@ -135,8 +118,9 @@ export const TipComponent = ({
         withdrawalParams.userContext = userContext;
 
         try {
-          const solPrice = 100; // TODO: fetch sol price from raydium or so
-          const signature = await withdraw(withdrawalParams, solPrice);
+          const solPriceData = await fetchSolanaPrice();
+          console.log("solPriceData", solPriceData);
+          const signature = await withdraw(withdrawalParams, solPriceData.price);
 
           toast.success(`Tip sent! $${customAmount}`);
         } catch (error: any) {
@@ -206,7 +190,7 @@ export const TipComponent = ({
                   <span className="text-sm">
                     Balance:{" "}
                     <span className="text-green-400">
-                      {balanceLoading ? "Loading..." : `$${balance}`}
+                      {isLoading ? "Loading..." : `$${balance}`}
                     </span>
                   </span>
                 </div>
@@ -285,7 +269,6 @@ export const TipComponent = ({
                   customAmount <= 0 ||
                   customAmount > (balance || 0) ||
                   isPending ||
-                  isLoading ||
                   !address ||
                   !wallet
                 }
