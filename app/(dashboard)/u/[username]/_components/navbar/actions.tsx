@@ -19,18 +19,18 @@ export const Actions = () => {
           <Button
             size="sm"
             variant="ghost"
-            className="text-muted-foreground hover:text-primary"
+            className="text-white hover:text-white hover:bg-red-500"
           >
             <CircleUserRound className="h-5 w-5 mr-2" />
             Profile
           </Button>
         </Link>
       </div>
-      <Link href="/" className="flex items-center">
+      <Link href="/" className="flex items-center hover:bg-red-500 rounded-md">
         <Button
           size="sm"
           variant="ghost"
-          className="text-muted-foreground hover:text-primary"
+          className="text-white hover:text-white hover:bg-red-500"
         >
           Exit
         </Button>

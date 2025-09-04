@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { toast } from "sonner";
 
 import {
   DropdownMenu,
@@ -84,7 +85,13 @@ export const ProfileDropdown = ({
               ) : (
                 <>
                   <p className="text-md text-gray-300">{truncateWalletAddress(currentUserAta?.streamerAta ?? "")}</p>
-                  <Copy className="w-4 h-4 text-gray-300 cursor-pointer" onClick={() => navigator.clipboard.writeText(currentUserAta?.streamerAta ?? "")} />
+                  <Copy 
+                    className="w-4 h-4 text-gray-300 cursor-pointer" 
+                    onClick={() => {
+                      navigator.clipboard.writeText(currentUserAta?.streamerAta ?? "");
+                      toast.success("Address copied to clipboard");
+                    }} 
+                  />
                 </>
               )}
             </span>

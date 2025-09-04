@@ -27,13 +27,13 @@ export const NavItem = ({
       asChild
       variant="ghost"
       className={cn(
-        "w-full h-12",
+        "w-full h-12 hover:bg-red-500",
         collapsed ? "justify-center" : "justify-start",
-        isActive && "bg-accent"
+        isActive && "bg-red-500"
       )}
     >
       <Link href={href}>
-        <div className="flex items-center gap-x-4">
+        <div className="flex items-center gap-x-4 hover:bg-red-500">
           <Icon className={cn("h-4 w-4", collapsed ? "mr-0" : "mr-2")} />
           {!collapsed && <span>{label}</span>}
         </div>
