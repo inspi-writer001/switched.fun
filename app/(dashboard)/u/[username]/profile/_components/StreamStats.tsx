@@ -6,13 +6,17 @@ const NA = "0";
 
 const StreamStats = () => {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden bg-background">
       <div className=" bg-transparent py-2 px-4 w-full border-b">
         <span className="text-white text-sm font-medium">
           Stream Statistics
         </span>
       </div>
-      <CardContent className="p-4">
+      <div className="p-4 flex items-center align-middle justify-center text-2xl text-white font-bold">
+        Not available yet
+      </div>
+
+      {/* <CardContent className="p-4">
         <div className="flex justify-between items-start">
           <div>
             <div className="flex items-center gap-2">
@@ -55,7 +59,7 @@ const StreamStats = () => {
             <span className="font-medium">{NA}</span>
           </div>
         </div>
-      </CardContent>
+      </CardContent> */}
     </Card>
   );
 };

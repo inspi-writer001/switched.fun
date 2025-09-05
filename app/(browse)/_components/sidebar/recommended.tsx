@@ -5,7 +5,6 @@ import { useSidebar } from "@/store/use-sidebar";
 import { UserItem, UserItemSkeleton } from "./user-item";
 import { useRecommended } from "@/hooks/use-recommended";
 
-
 export const Recommended = () => {
   const { collapsed } = useSidebar((state) => state);
 
@@ -21,12 +20,10 @@ export const Recommended = () => {
     <div>
       {showLabel && (
         <div className="pl-6 mb-4">
-          <p className="text-sm text-muted-foreground">
-            Recommended
-          </p>
+          <p className="text-sm text-muted-foreground">Recommended</p>
         </div>
       )}
-      <ul className="space-y-2 px-2">
+      <ul className="space-y-2 px-2 ">
         {data?.map((user) => (
           <UserItem
             key={user.id}
