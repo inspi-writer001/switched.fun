@@ -14,27 +14,28 @@ export const Recommended = () => {
 
   if (isLoading) {
     return <RecommendedSkeleton />;
+  } else {
+    return (
+      <div>
+        {showLabel && (
+          <div className="pl-6 mb-4">
+            <p className="text-sm text-muted-foreground">Recommended</p>
+          </div>
+        )}
+        <ul className="space-y-2 px-2 ">
+          {data?.map((user) => (
+            <UserItem
+              key={user.id}
+              username={user.username}
+              imageUrl={user.imageUrl}
+              isLive={user.stream?.isLive}
+            />
+          ))}
+        </ul>
+      </div>
+    );
   }
 
-  return (
-    <div>
-      {showLabel && (
-        <div className="pl-6 mb-4">
-          <p className="text-sm text-muted-foreground">Recommended</p>
-        </div>
-      )}
-      <ul className="space-y-2 px-2 ">
-        {data?.map((user) => (
-          <UserItem
-            key={user.id}
-            username={user.username}
-            imageUrl={user.imageUrl}
-            isLive={user.stream?.isLive}
-          />
-        ))}
-      </ul>
-    </div>
-  );
 };
 
 export const RecommendedSkeleton = () => {

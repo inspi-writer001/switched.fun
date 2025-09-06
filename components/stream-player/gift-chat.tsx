@@ -19,6 +19,7 @@ import { getServerWallet } from "@/lib/server-wallet";
 import { withdraw } from "@/app/(dashboard)/u/[username]/profile/_components/withdrawalService";
 import { userHasWallet } from "@civic/auth-web3";
 import { fetchSolanaPrice, fetchSolanaPriceCached } from "@/utils/solana-price";
+import { Button } from "../ui/button";
 
 interface TipComponentProps {
   hostIdentity: string;
@@ -28,9 +29,7 @@ interface TipComponentProps {
 }
 
 export const TipComponent = ({
-  hostIdentity,
   hostWalletAddress,
-  onClose,
   onSendTip,
 }: TipComponentProps) => {
   const { giftMode } = useChatSidebar((state) => state);
@@ -209,7 +208,7 @@ export const TipComponent = ({
 
           {/* Bottom Section */}
           <div className="__bottom_component flex flex-col">
-            <div className="flex-1 mb-o p-4 space-y-6 border-t border-gray-700">
+            <div className="flex-1 mb-o p-0 pt-4 md:p-4 space-y-6 border-t border-border/30">
               {/* Tip Amount Buttons */}
               <div className="flex flex-row overflow-x-scroll gap-2">
                 {tipAmounts.map((amount) => (
@@ -237,15 +236,15 @@ export const TipComponent = ({
                   type="number"
                   value={customAmount}
                   onChange={handleCustomAmountChange}
-                  className="w-full bg-transparent px-3 py-2 text-white focus:outline-none text-center"
+                  className="w-full bg-transparent border border-border/30 rounded-full px-3 py-2 text-white focus:outline-none text-center"
                   min="1"
                   max={balance}
                 />
               </div>
             </div>
-            <div className="flex flex-row p-4 space-y-4 w-full justify-between">
+            <div className="flex flex-row md:p-4 space-y-4 w-full items-center justify-between">
               {/* Send Tip Button */}
-              <div className="__balance_container flex flex-row w-[40%] place-items-center">
+              <div className="__balance_container flex flex-row place-items-center">
                 <div className="__image_container flex place-items-center">
                   <Image
                     src={"/image/pepicons-print_coins.png"}
@@ -263,7 +262,7 @@ export const TipComponent = ({
                   </span>
                 </div>
               </div>
-              <button
+              <Button
                 onClick={handleSendTip}
                 disabled={
                   customAmount <= 0 ||
@@ -272,55 +271,60 @@ export const TipComponent = ({
                   !address ||
                   !wallet
                 }
-                className="md:w-[100px] bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium py-2 rounded-lg transition-colors"
+                size="sm"
+                className="px-4"
               >
                 {isPending
                   ? "Sending..."
                   : !address || !wallet
                     ? "Connect Wallet"
                     : "Send Tip"}
-              </button>
+              </Button>
             </div>
           </div>
         </>
       ) : (
         <>
           {/* Gift Mode */}
-          <div className="p-4">
+          <div className="w-full md:p-4 mt-4 md:mt-0">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center text-gray-400">
                 <div className="w-4 h-4 bg-yellow-400 rounded-full mr-2"></div>
                 <span className="text-sm">Balance: ${balance}</span>
               </div>
-              <div className="flex bg-gray-800 rounded-full p-1">
-                <button
+              <div className="flex bg-border/30 rounded-full p-1">
+                <Button
                   onClick={() => setSelectedFilter("all")}
+                  variant="ghost"
                   className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${
                     selectedFilter === "all"
                       ? "bg-red-600 text-white"
                       : "text-gray-400 hover:text-white"
                   }`}
+                  size="sm"
                 >
                   All
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => setSelectedFilter("affordable")}
+                  variant="ghost"
                   className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${
                     selectedFilter === "affordable"
                       ? "bg-red-600 text-white"
                       : "text-gray-400 hover:text-white"
                   }`}
+                  size="sm"
                 >
                   Affordable
-                </button>
+                </Button>
               </div>
             </div>
 
             {/* Scrollable Gift Grid - 2x2 */}
-            <div className=" h-full max-h-96 overflow-y-auto">
-              <div className="grid grid-cols-2 gap-3 p-2">
+            <div className=" h-full max-h-[calc(100dvh-230px)] w-full overflow-y-auto">
+              <div className="w-full grid grid-cols-2 gap-3">
                 {filteredGifts.map((gift) => (
-                  <button
+                  <Button
                     key={gift.id}
                     onClick={() => {
                       handleGiftSelect(gift.id);
@@ -329,7 +333,7 @@ export const TipComponent = ({
                     className={`relative rounded-2xl p-4 flex flex-col items-center justify-center transition-all hover:scale-105 h-32 ${
                       selectedGift === gift.id
                         ? "bg-[#FE3C3E40] border-[#FE3C3E] text-white"
-                        : "bg-transparent border-[#353534] text-gray-300 hover:border-gray-500"
+                        : "bg-secondary text-gray-300 hover:border-gray-500"
                     }`}
                   >
                     {gift.premium && (
@@ -352,13 +356,13 @@ export const TipComponent = ({
                         ${formatPrice(gift.price)}
                       </span>
                     </div>
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
-            <div className="flex flex-row p-4 space-y-4 w-full justify-between">
+            <div className="flex items-center p-0 md:p-4 space-y-4 w-full justify-between">
               {/* Send Tip Button */}
-              <div className="__balance_container flex flex-row w-[40%] place-items-center">
+              <div className="__balance_container flex flex-row place-items-center">
                 <div className="__image_container flex place-items-center">
                   <Image
                     src={"/image/pepicons-print_coins.png"}
@@ -376,7 +380,7 @@ export const TipComponent = ({
                   </span>
                 </div>
               </div>
-              <button
+              <Button
                 onClick={handleSendTip}
                 disabled={
                   customAmount <= 0 ||
@@ -384,16 +388,18 @@ export const TipComponent = ({
                   isPending ||
                   isLoading ||
                   !address ||
-                  !wallet
+                  !wallet || !selectedGift
                 }
-                className="md:w-[100px] bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium py-2 rounded-lg transition-colors"
+                size="sm"
+                className="px-4"
+                // className="md:w-[100px] bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium py-2 rounded-lg transition-colors"
               >
                 {selectedGift && isPending
                   ? "Sending..."
                   : !address || !wallet
                     ? "Connect Wallet"
                     : "Send Gift"}
-              </button>
+              </Button>
             </div>
           </div>
         </>

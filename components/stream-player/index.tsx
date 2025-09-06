@@ -13,8 +13,10 @@ import { ChatToggle } from "./chat-toggle";
 import { Chat, ChatSkeleton } from "./chat";
 import { Video, VideoSkeleton } from "./video";
 import { Header, HeaderSkeleton } from "./header";
+import { MobileStreamPlayerDetails } from "./mobile-stream-player-details";
+import { MobileTipModal } from "./mobile-tip-modal";
 
-type CustomStream = {
+export type CustomStream = {
   id: string;
   isChatEnabled: boolean;
   isChatDelayed: boolean;
@@ -24,7 +26,7 @@ type CustomStream = {
   name: string;
 };
 
-type CustomUser = {
+export type CustomUser = {
   id: string;
   username: string;
   bio: string | null;
@@ -47,7 +49,7 @@ export const StreamPlayer = ({
   isFollowing,
 }: StreamPlayerProps) => {
   const { token, name, identity } = useViewerToken(user.id);
-  const { collapsed } = useChatSidebar((state) => state);
+  const { collapsed, isShowTipModal } = useChatSidebar((state) => state);
 
   if (!token || !name || !identity) {
     return <StreamPlayerSkeleton />;
@@ -68,35 +70,39 @@ export const StreamPlayer = ({
           collapsed && "lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-2"
         )}
       >
-        <div className="space-y-4 col-span-1 lg:col-span-2 xl:col-span-2 2xl:col-span-5 lg:overflow-y-auto hidden-scrollbar pb-10">
+        <div className="space-y-4 col-span-1 lg:col-span-2 xl:col-span-2 2xl:col-span-5 lg:overflow-y-auto hidden-scrollbar md:pb-10">
           <Video
             hostName={user.username}
             hostIdentity={user.id}
             thumbnailUrl={stream.thumbnailUrl}
           />
-          <Header
-            hostName={user.username}
-            hostIdentity={user.id}
-            viewerIdentity={identity}
-            imageUrl={user.imageUrl}
-            isFollowing={isFollowing}
-            name={stream.name}
-          />
-          <InfoCard
-            hostIdentity={user.id}
-            viewerIdentity={identity}
-            name={stream.name}
-            thumbnailUrl={stream.thumbnailUrl}
-          />
-          <AboutCard
-            hostName={user.username}
-            hostIdentity={user.id}
-            viewerIdentity={identity}
-            bio={user.bio}
-            followedByCount={user._count.followedBy}
-          />
+          <div className="hidden md:flex md:flex-col md:gap-y-4">
+            <Header
+              hostName={user.username}
+              hostIdentity={user.id}
+              viewerIdentity={identity}
+              imageUrl={user.imageUrl}
+              isFollowing={isFollowing}
+              name={stream.name}
+            />
+            <InfoCard
+              hostIdentity={user.id}
+              viewerIdentity={identity}
+              name={stream.name}
+              thumbnailUrl={stream.thumbnailUrl}
+            />
+            <AboutCard
+              hostName={user.username}
+              hostIdentity={user.id}
+              viewerIdentity={identity}
+              bio={user.bio}
+              followedByCount={user._count.followedBy}
+            />
+          </div>
         </div>
-        <div className={cn("col-span-1", collapsed && "hidden")}>
+        <div
+          className={cn("col-span-1 hidden md:block", collapsed && "hidden")}
+        >
           <Chat
             viewerName={name}
             hostName={user.username}
@@ -108,6 +114,25 @@ export const StreamPlayer = ({
             isChatFollowersOnly={stream.isChatFollowersOnly}
           />
         </div>
+
+        <div className="col-span-1 block md:hidden">
+          <MobileStreamPlayerDetails
+            user={user}
+            identity={identity}
+            isFollowing={isFollowing}
+            stream={stream}
+            viewerName={name}
+          />
+        </div>
+
+        {isShowTipModal && (
+          <MobileTipModal 
+            hostIdentity={user.id}
+            hostWalletAddress={user.solanaWallet || ""}
+            // onClose={() => onChangeShowTipModal(false)}
+            onSendTip={(amount) => console.log(`Sending tip: ${amount}`)}
+          />
+        )}
       </LiveKitRoom>
     </>
   );
@@ -116,7 +141,7 @@ export const StreamPlayer = ({
 export const StreamPlayerSkeleton = () => {
   return (
     <div className="grid grid-cols-1 lg:gap-y-0 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-6 h-full">
-      <div className="space-y-4 col-span-1 lg:col-span-2 xl:col-span-2 2xl:col-span-5 lg:overflow-y-auto hidden-scrollbar pb-10">
+      <div className="space-y-4 col-span-1 lg:col-span-2 xl:col-span-2 2xl:col-span-5 lg:overflow-y-auto hidden-scrollbar md:pb-10">
         <VideoSkeleton />
         <HeaderSkeleton />
       </div>

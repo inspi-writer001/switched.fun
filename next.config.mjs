@@ -6,6 +6,7 @@ const nextConfig = {
     domains: [
       "utfs.io",
       "bqev70kfmw.ufs.sh",
+      "images.unsplash.com"
     ],
   },
   webpack: (config) => {

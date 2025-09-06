@@ -31,9 +31,9 @@ export const UserItem = ({ username, imageUrl, isLive }: UserItemProps) => {
       className={cn(
         "w-full h-12 ",
         collapsed
-          ? "justify-center hover:bg-black/10 hover:border-red-500 hover:border"
+          ? "justify-center hover:bg-border/30 hover:border-red-500 hover:border"
           : "justfy-start",
-        isActive && "bg-black/95"
+        isActive && "bg-border/30"
       )}
     >
       <Link href={href}>

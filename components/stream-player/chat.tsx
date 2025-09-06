@@ -39,7 +39,9 @@ export const Chat = ({
   isChatFollowersOnly,
 }: ChatProps) => {
   const matches = useMediaQuery("(max-width: 1024px)");
-  const { variant, onExpand, onChangeVariant } = useChatSidebar((state) => state);
+  const { variant, onExpand, onChangeVariant } = useChatSidebar(
+    (state) => state
+  );
   const connectionState = useConnectionState();
   const participant = useRemoteParticipant(hostIdentity);
 
@@ -85,7 +87,7 @@ export const Chat = ({
   };
 
   return (
-    <div className="flex flex-col bg-background border-l border-b pt-0 h-[calc(100vh-80px)] relative">
+    <div className="flex flex-col bg-background md:border-l md:border-b pt-0 h-[calc(100vh-380px)] md:h-[calc(100vh-80px)] relative">
       <ChatHeader />
 
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
@@ -126,12 +128,14 @@ export const Chat = ({
         />
       )}
       {variant === ChatVariant.GIFT && (
-        <TipComponent
-          hostIdentity={hostIdentity}
-          hostWalletAddress={hostWalletAddress}
-          onClose={() => onChangeVariant(ChatVariant.CHAT)}
-          onSendTip={(amount) => console.log(`Sending tip: ${amount}`)}
-        />
+        <div className="hidden md:block">
+          <TipComponent
+            hostIdentity={hostIdentity}
+            hostWalletAddress={hostWalletAddress}
+            onClose={() => onChangeVariant(ChatVariant.CHAT)}
+            onSendTip={(amount) => console.log(`Sending tip: ${amount}`)}
+          />
+        </div>
       )}
 
       <style jsx>{`

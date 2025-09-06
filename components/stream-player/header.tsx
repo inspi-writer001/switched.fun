@@ -31,7 +31,6 @@ export const Header = ({
   hostIdentity,
   viewerIdentity,
   isFollowing,
-  name,
 }: HeaderProps) => {
   const participants = useParticipants();
   const participant = useRemoteParticipant(hostIdentity);

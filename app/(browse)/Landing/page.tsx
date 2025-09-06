@@ -4,7 +4,7 @@ import { VideoHero } from "./_components/VideoHero";
 
 export default function Landing() {
   return (
-    <div className="relative w-full h-[60vh] min-h-[500px] overflow-hidden rounded-none">
+    <div className="relative w-full h-[45vh] md:h-[60vh] md:min-h-[500px] overflow-hidden rounded-none">
       {/* Server-side static content */}
       <StaticHero />
 

@@ -35,7 +35,7 @@ export default async function Page() {
     <>
       <Landing />
       <HydrationBoundary state={dehydratedState}>
-        <div className="h-full p-8 max-w-screen-2xl mx-auto">
+        <div className="h-full p-4 py-8 md:p-8 max-w-screen-2xl mx-auto">
           <Suspense fallback={<ResultsSkeleton />}>
             <Results />
           </Suspense>

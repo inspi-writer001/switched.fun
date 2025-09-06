@@ -16,11 +16,11 @@ export const ChatHeader = () => {
   return (
     <>
       {variant !== ChatVariant.GIFT ? (
-        <div className="relative p-3 border-b">
+        <div className="relative p-3 border-b border-b-border/30">
           <div className="absolute left-2 top-2 hidden lg:block">
             <ChatToggle />
           </div>
-          <p className="font-semibold text-priamry text-center">Stream Chat</p>
+          <p className="font-semibold text-white text-center">Stream Chat</p>
           <div className="absolute right-2 top-2">
             <VariantToggle />
           </div>
