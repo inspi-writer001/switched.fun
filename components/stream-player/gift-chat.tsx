@@ -20,16 +20,24 @@ import { withdraw } from "@/app/(dashboard)/u/[username]/profile/_components/wit
 import { userHasWallet } from "@civic/auth-web3";
 import { fetchSolanaPrice, fetchSolanaPriceCached } from "@/utils/solana-price";
 import { Button } from "../ui/button";
+import { createTip } from "@/actions/tip";
+import { useTipBroadcast } from "@/hooks/use-tip-broadcast";
 
 interface TipComponentProps {
   hostIdentity: string;
   hostWalletAddress?: string;
+  streamerId?: string;
+  streamId?: string;
   onClose?: () => void;
   onSendTip?: (amount: number) => void;
 }
 
 export const TipComponent = ({
+  hostIdentity,
   hostWalletAddress,
+  streamerId,
+  streamId,
+  onClose,
   onSendTip,
 }: TipComponentProps) => {
   const { giftMode } = useChatSidebar((state) => state);
@@ -56,6 +64,8 @@ export const TipComponent = ({
   const { data: balance, isLoading } = useBalance(
     currentUserAta?.streamerAta
   );
+
+  const { broadcastTip } = useTipBroadcast(null);
 
   const tipAmounts = [5, 10, 20, 50, 100, 1000];
 
@@ -118,8 +128,29 @@ export const TipComponent = ({
 
         try {
           const solPriceData = await fetchSolanaPrice();
-          console.log("solPriceData", solPriceData);
           const signature = await withdraw(withdrawalParams, solPriceData.price);
+
+          // Save tip to database after successful transaction
+          if (streamerId) {
+            try {
+              const tipResult = await createTip({
+                amount: customAmount,
+                tokenType: "USDC", // Assuming USDC for now
+                streamerId: streamerId,
+                streamId: streamId,
+                transactionHash: signature,
+              });
+
+              // Broadcast tip notification to all viewers
+              if (tipResult.success && tipResult.data) {
+                await broadcastTip(tipResult.data);
+              }
+            } catch (dbError) {
+              console.error("Failed to save tip to database:", dbError);
+              // Don't fail the entire transaction if DB save fails
+              // The blockchain transaction was successful
+            }
+          }
 
           toast.success(`Tip sent! $${customAmount}`);
         } catch (error: any) {

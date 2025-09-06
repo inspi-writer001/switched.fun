@@ -10,6 +10,8 @@ import { TipComponent } from "./gift-chat";
 interface TipComponentProps {
   hostIdentity: string;
   hostWalletAddress?: string;
+  streamerId?: string;
+  streamId?: string;
   onClose?: () => void;
   onSendTip?: (amount: number) => void;
 }
@@ -17,6 +19,8 @@ interface TipComponentProps {
 export const MobileTipModal = ({
   hostIdentity,
   hostWalletAddress,
+  streamerId,
+  streamId,
   onClose,
   onSendTip,
 }: TipComponentProps) => {
@@ -67,6 +71,8 @@ export const MobileTipModal = ({
             <TipComponent
               hostIdentity={hostIdentity}
               hostWalletAddress={hostWalletAddress}
+              streamerId={streamerId || hostIdentity}
+              streamId={streamId}
               onClose={() => {
                   onChangeShowTipModal(false);
                   onClose?.();

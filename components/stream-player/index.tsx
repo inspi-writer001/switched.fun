@@ -112,6 +112,7 @@ export const StreamPlayer = ({
             isChatEnabled={stream.isChatEnabled}
             isChatDelayed={stream.isChatDelayed}
             isChatFollowersOnly={stream.isChatFollowersOnly}
+            streamId={stream.id}
           />
         </div>
 
@@ -129,7 +130,8 @@ export const StreamPlayer = ({
           <MobileTipModal 
             hostIdentity={user.id}
             hostWalletAddress={user.solanaWallet || ""}
-            // onClose={() => onChangeShowTipModal(false)}
+            streamerId={user.id}
+            streamId={stream.id}
             onSendTip={(amount) => console.log(`Sending tip: ${amount}`)}
           />
         )}

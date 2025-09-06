@@ -25,6 +25,8 @@ model User {
   blockedBy               Block[]        @relation("BlockedBy")
   stream                  Stream?
   interests               UserInterest[]
+  tipsSent                Tip[]          @relation("TipsSent")
+  tipsReceived            Tip[]          @relation("TipsReceived")
 }
 
 model Stream {
@@ -46,6 +48,7 @@ model Stream {
   updatedAt           DateTime   @updatedAt
   user                User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   views               Int        @default(0)
+  tips                Tip[]       // Tips received during this stream
 
   @@index([userId])
   @@index([ingressId])
@@ -158,6 +161,38 @@ model UserInterest {
   @@unique([userId, subCategoryId])
   @@index([userId])
   @@index([subCategoryId])
+}
+
+model Tip {
+  id              String      @id @default(uuid())
+  amount          Decimal     // Amount in the token's smallest unit (e.g., lamports for SOL, micro-USDC for USDC)
+  tokenType       TokenType   @default(USDC) // USDC, SOL, etc.
+  giftType        String?     // Optional: if it's a gift tip, store the gift type
+  giftName        String?     // Optional: display name of the gift
+  tipperId        String      // Who sent the tip
+  streamerId      String      // Who received the tip
+  streamId        String?     // Which stream the tip was sent during (optional for offline tips)
+  transactionHash String?     // Blockchain transaction hash for verification
+  isProcessed     Boolean     @default(false) // Whether the tip has been processed/withdrawn
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  // Relations
+  tipper          User        @relation("TipsSent", fields: [tipperId], references: [id], onDelete: Cascade)
+  streamer        User        @relation("TipsReceived", fields: [streamerId], references: [id], onDelete: Cascade)
+  stream          Stream?     @relation(fields: [streamId], references: [id], onDelete: SetNull)
+
+  @@index([tipperId])
+  @@index([streamerId])
+  @@index([streamId])
+  @@index([createdAt])
+  @@index([isProcessed])
+  @@index([tokenType])
+}
+
+enum TokenType {
+  USDC
+  SOL
 }
 
 enum StreamType {

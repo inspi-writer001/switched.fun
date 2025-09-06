@@ -25,6 +25,7 @@ export const MobileChat = ({
       isChatEnabled={stream.isChatEnabled}
       isChatDelayed={stream.isChatDelayed}
       isChatFollowersOnly={stream.isChatFollowersOnly}
+      streamId={stream.id}
     />
   );
 };
