@@ -7,11 +7,9 @@ import { Button } from "@/components/ui/button";
 import { useCreatorSidebar } from "@/store/use-creator-sidebar";
 
 export const Toggle = () => {
-  const {
-    collapsed,
-    onExpand,
-    onCollapse,
-  } = useCreatorSidebar((state) => state);
+  const { collapsed, onExpand, onCollapse } = useCreatorSidebar(
+    (state) => state
+  );
 
   const label = collapsed ? "Expand" : "Collapse";
 
@@ -23,7 +21,7 @@ export const Toggle = () => {
             <Button
               onClick={onExpand}
               variant="ghost"
-              className="h-auto p-2"
+              className="h-auto p-2 hover:bg-red-500"
             >
               <ArrowRightFromLine className="h-4 w-4" />
             </Button>
@@ -32,14 +30,12 @@ export const Toggle = () => {
       )}
       {!collapsed && (
         <div className="p-3 pl-6 mb-2 hidden lg:flex items-center w-full">
-          <p className="font-semibold text-primary">
-            Dashboard
-          </p>
+          <p className="font-semibold text-primary">Dashboard</p>
           <Hint label={label} side="right" asChild>
             <Button
               onClick={onCollapse}
               variant="ghost"
-              className="h-auto p-2 ml-auto"
+              className="h-auto p-2 ml-auto hover:bg-red-500"
             >
               <ArrowLeftFromLine className="h-4 w-4" />
             </Button>

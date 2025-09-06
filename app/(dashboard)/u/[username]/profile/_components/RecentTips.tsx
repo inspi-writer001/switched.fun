@@ -5,28 +5,23 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { DollarSign } from "lucide-react";
 import { useRecentTips } from "./hook/useRecentTips";
-import { useUser } from "@civic/auth-web3/react";
-import { userHasWallet } from "@civic/auth-web3";
+import { useBalance, useCurrentUserAta } from "@/hooks/use-balance";
+
+interface Tip {
+  id: string;
+  sender: string;
+  amount: number;
+  currency: string;
+  timeAgo: string;
+  message?: string;
+}
 
 export default function RecentTips() {
-  // 1️⃣ Civic wallet state
-  const userContext = useUser();
-  const hasWallet = userHasWallet(userContext);
+  const { data: currentUserAta, isLoading: isLoadingAta } = useCurrentUserAta();
 
-  // 3️⃣ Now safe to fetch - moved before conditional return
-  const { tips, loading, error } = useRecentTips(5);
-
-  // 2️⃣ Don't fetch or render tips until wallet is connected
-  if (!hasWallet) {
-    return (
-      <Card className="p-4">
-        <h2 className="text-xl font-semibold mb-4">Recent Tips</h2>
-        <p className="text-sm text-muted-foreground">
-          Please connect your wallet to view recent tips.
-        </p>
-      </Card>
-    );
-  }
+  const { data: balance = 0, isLoading: isLoadingBalance } = useBalance(
+    currentUserAta?.streamerAta
+  );
 
   // helper to trim long addresses
   const shorten = (addr: string) =>
@@ -47,10 +42,10 @@ export default function RecentTips() {
   };
 
   return (
-    <Card className="p-4">
+    <Card className="p-4 bg-background">
       <h2 className="text-xl font-semibold mb-4">Recent Tips</h2>
       <div className="space-y-4">
-        {loading ? (
+        {isLoadingAta || isLoadingBalance ? (
           // loading skeletons
           Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="flex items-start gap-3 pb-4">
@@ -60,39 +55,6 @@ export default function RecentTips() {
                 <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse" />
               </div>
               <div className="h-4 bg-gray-200 rounded w-1/4 animate-pulse" />
-            </div>
-          ))
-        ) : error ? (
-          <p className="text-sm text-red-600 mt-2">{error}</p>
-        ) : tips.length > 0 ? (
-          tips.map((tip) => (
-            <div
-              key={tip.id}
-              className="flex items-start gap-3 border-b pb-4 last:border-0"
-            >
-              <div
-                className={`h-10 w-10 rounded-full ${getTokenColor(
-                  tip.currency
-                )} flex items-center justify-center text-white`}
-              >
-                <DollarSign className="h-5 w-5" />
-              </div>
-              <div className="flex-1">
-                <div className="flex justify-between">
-                  <p className="font-medium">{shorten(tip.sender)}</p>
-                  <p className="text-sm text-muted-foreground">{tip.timeAgo}</p>
-                </div>
-                {tip.message && (
-                  <p className="text-sm mt-1 text-muted-foreground">
-                    {tip.message}
-                  </p>
-                )}
-              </div>
-              <div className="text-right">
-                <p className="font-medium">
-                  {tip.amount.toFixed(4)} {tip.currency}
-                </p>
-              </div>
             </div>
           ))
         ) : (

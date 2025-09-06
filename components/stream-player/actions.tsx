@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { onFollow, onUnfollow } from "@/actions/follow";
 import { ChatVariant, useChatSidebar } from "@/store/use-chat-sidebar";
-import { DollarSign } from "lucide-react";
+import { useMobile } from "@/hooks/use-mobile";
 
 interface ActionsProps {
   hostIdentity: string;
@@ -27,7 +27,9 @@ export const Actions = ({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const { user } = useUser();
-  const { onChangeVariant } = useChatSidebar();
+  const { onChangeVariant, onChangeShowTipModal } = useChatSidebar();
+
+  const isMobile = useMobile();
 
   const handleFollow = () => {
     startTransition(() => {
@@ -65,12 +67,16 @@ export const Actions = ({
 
   const handleSendTip = () => {
     if (!user?.id) {
-      return router.push("/sign-in");
+      return;
     }
 
     if (isHost) return;
 
-    onChangeVariant(ChatVariant.GIFT);
+    if (isMobile) {
+      onChangeShowTipModal(true);
+    } else {
+      onChangeVariant(ChatVariant.GIFT);
+    }
   };
 
   return (
@@ -78,7 +84,7 @@ export const Actions = ({
       <Button
         disabled={isPending || isHost}
         onClick={toggleFollow}
-        variant="primary"
+        variant="outline"
         size="sm"
         className="w-full lg:w-auto"
       >

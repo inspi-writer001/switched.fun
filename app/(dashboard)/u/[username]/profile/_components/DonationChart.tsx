@@ -22,13 +22,13 @@ import { useTokenBalances } from "./useTokenBalances";
 import { usePrices } from "./usePrices";
 // ─────────────────────────────────────────────────────────────────────────────
 import { useRecentTips } from "./hook/useRecentTips";
+import { useBalance, useCurrentUserAta } from "@/hooks/use-balance";
 
 interface DonationChartProps {
   period: "day" | "week" | "month" | "year";
 }
 
-// Hard‐code the two known stablecoin mints:
-const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+// Hard‐code the USDT mint address
 const USDT_MINT = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB";
 
 // Colors for each series (SOL, USDC, USDT, Others, and Total line):
@@ -45,6 +45,14 @@ export default function DonationChart({
 }: DonationChartProps) {
   const [period, setPeriod] = useState<"day" | "week" | "month" | "year">(
     initialPeriod
+  );
+
+  // ─── Get current user's ATA and balance ────────────────────────────────────
+  const { data: currentUserAta, isLoading: isLoadingAta } = useCurrentUserAta();
+  const USDC_MINT = currentUserAta?.streamerAta;
+
+  const { data: balance = 0, isLoading: isLoadingBalance } = useBalance(
+    currentUserAta?.streamerAta
   );
 
   // ─── Step 1: historical tips ───────────────────────────────────────────────
@@ -83,10 +91,10 @@ export default function DonationChart({
       period === "day"
         ? 24
         : period === "week"
-        ? 7
-        : period === "month"
-        ? 4
-        : 12;
+          ? 7
+          : period === "month"
+            ? 4
+            : 12;
 
     // 3.1 Initialize each historical bucket with zeros
     for (let i = count - 1; i >= 0; i--) {
@@ -95,10 +103,10 @@ export default function DonationChart({
         period === "day"
           ? "hours"
           : period === "week"
-          ? "days"
-          : period === "month"
-          ? "weeks"
-          : "months"
+            ? "days"
+            : period === "month"
+              ? "weeks"
+              : "months"
       );
 
       let key: string;
@@ -204,9 +212,9 @@ export default function DonationChart({
             size="sm"
             onClick={() => setPeriod(p)}
             className={
-              period === p 
-                ? "bg-primary text-primary-foreground hover:opacity-90 border-0" 
-                : "border-border hover:bg-accent hover:text-accent-foreground"
+              period === p
+                ? "bg-primary text-primary-foreground hover:opacity-90 border-0"
+                : "border-border hover:bg-red-500 hover:text-white"
             }
           >
             {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -234,11 +242,11 @@ export default function DonationChart({
             />
             <Legend />
 
-            {/* SOL, USDC, USDT, Others bars */}
-            <Bar dataKey="SOL" fill={TOKEN_COLORS.SOL} name="SOL" />
+            {/* SOL, USDC, USDT, Others bars
+            <Bar dataKey="SOL" fill={TOKEN_COLORS.SOL} name="SOL" /> */}
             <Bar dataKey="USDC" fill={TOKEN_COLORS.USDC} name="USDC" />
-            <Bar dataKey="USDT" fill={TOKEN_COLORS.USDT} name="USDT" />
-            <Bar dataKey="Others" fill={TOKEN_COLORS.Others} name="Others" />
+            {/* <Bar dataKey="USDT" fill={TOKEN_COLORS.USDT} name="USDT" />
+            <Bar dataKey="Others" fill={TOKEN_COLORS.Others} name="Others" /> */}
 
             {/* A "Total" line on top */}
             <Line

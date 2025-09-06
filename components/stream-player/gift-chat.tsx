@@ -1,53 +1,56 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { X } from "lucide-react";
 import { useUser, useWallet } from "@civic/auth-web3/react";
 import { toast } from "sonner";
 import { getProgram } from "@/utils/program";
-import { Connection, PublicKey } from "@solana/web3.js";
-import {
-  TOKEN_PROGRAM_ID,
-  getAssociatedTokenAddress,
-  getAccount,
-  getMint,
-} from "@solana/spl-token";
+import { PublicKey } from "@solana/web3.js";
+import { getAssociatedTokenAddress } from "@solana/spl-token";
 import { Wallet } from "@coral-xyz/anchor";
 import { BN } from "bn.js";
 import Image from "next/image";
-import { QRCodeSVG } from "qrcode.react";
-import { truncateBetween } from "@/utils/helpers";
-import { allGifts, Gift } from "./gift-items";
+import { allGifts } from "./gift-items";
+import { GiftMode, useChatSidebar } from "@/store/use-chat-sidebar";
+import { connection, supportedTokens } from "@/config/wallet";
+import { fetchStreamerAta, fetchBalance } from "@/utils/wallet";
+import { FundWallet } from "./fund-wallet";
+import { useBalance, useCurrentUserAta } from "@/hooks/use-balance";
+import { getServerWallet } from "@/lib/server-wallet";
+import { withdraw } from "@/app/(dashboard)/u/[username]/profile/_components/withdrawalService";
+import { userHasWallet } from "@civic/auth-web3";
+import { fetchSolanaPrice, fetchSolanaPriceCached } from "@/utils/solana-price";
+import { Button } from "../ui/button";
+import { createTip } from "@/actions/tip";
+import { useTipBroadcast } from "@/hooks/use-tip-broadcast";
 
 interface TipComponentProps {
   hostIdentity: string;
   hostWalletAddress?: string;
+  streamerId?: string;
+  streamId?: string;
   onClose?: () => void;
   onSendTip?: (amount: number) => void;
 }
 
-const connection = new Connection("https://api.devnet.solana.com", "confirmed");
-const supportedTokens = {
-  name: "USDC",
-  symbol: "usdc",
-  contractAddress: "2o39Cm7hzaXmm9zGGGsa5ZiveJ93oMC2D6U7wfsREcCo",
-  decimals: 6,
-};
-
 export const TipComponent = ({
   hostIdentity,
   hostWalletAddress,
+  streamerId,
+  streamId,
   onClose,
   onSendTip,
 }: TipComponentProps) => {
-  const [mode, setMode] = useState<"qr" | "gift">("qr");
+  const { giftMode } = useChatSidebar((state) => state);
   const [selectedAmount, setSelectedAmount] = useState(5);
   const [customAmount, setCustomAmount] = useState(5);
-  const [selectedToken, setSelectedToken] = useState(supportedTokens.symbol);
-  const [balance, setBalance] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [streamerAtaAddress, setStreamerAtaAddress] = useState<string>("");
+  const userContext = useUser();
+  const hasWallet = userHasWallet(userContext);
+  const userAddress = hasWallet ? userContext.solana.address : "";
+
+  const { data: currentUserAta } = useCurrentUserAta();
 
   // Gift states
   const [selectedFilter, setSelectedFilter] = useState<"all" | "affordable">(
@@ -55,9 +58,14 @@ export const TipComponent = ({
   );
   const [selectedGift, setSelectedGift] = useState<string | null>(null);
 
-  const userContext = useUser();
   const { wallet, address: solAddress } = useWallet({ type: "solana" });
   const address = solAddress || "";
+
+  const { data: balance, isLoading } = useBalance(
+    currentUserAta?.streamerAta
+  );
+
+  const { broadcastTip } = useTipBroadcast(null);
 
   const tipAmounts = [5, 10, 20, 50, 100, 1000];
 
@@ -83,7 +91,7 @@ export const TipComponent = ({
       return;
     }
 
-    if (customAmount <= 0 || customAmount > balance) {
+    if (customAmount <= 0 || customAmount > (balance || 0)) {
       toast.error("Invalid tip amount");
       return;
     }
@@ -96,14 +104,7 @@ export const TipComponent = ({
         if (!tokenInfo) throw new Error("Unsupported token");
 
         const tokenMint = new PublicKey(tokenInfo.contractAddress);
-        const tipAmount = new BN(
-          customAmount * Math.pow(10, tokenInfo.decimals)
-        );
-
-        const signerAta = await getAssociatedTokenAddress(
-          tokenMint,
-          new PublicKey(address)
-        );
+        const tipAmount = customAmount;
 
         const [streamerStatePDA] = PublicKey.findProgramAddressSync(
           [Buffer.from("user"), new PublicKey(hostWalletAddress).toBuffer()],
@@ -115,35 +116,52 @@ export const TipComponent = ({
           streamerStatePDA,
           true
         );
+        let withdrawalParams: any = {
+          amount: tipAmount,
+          destinationAddress: streamerAta,
+          walletType: "platform",
+          userAddress: userAddress ?? '',
+          connection,
+        };
 
-        const [globalStatePDA] = PublicKey.findProgramAddressSync(
-          [Buffer.from("global_state")],
-          program.programId
-        );
+        withdrawalParams.userContext = userContext;
 
-        const tx = await program.methods
-          .tipUser({
-            amount: tipAmount,
-            streamerAccount: new PublicKey(hostWalletAddress),
-          })
-          .accounts({
-            signer: address,
-            signerAta: signerAta,
-            streamerAta: streamerAta,
-            tokenMint: tokenMint,
-            // streamerState: streamerStatePDA,
-            // globalState: globalStatePDA,
-            tokenProgram: TOKEN_PROGRAM_ID,
-          })
-          .rpc();
+        try {
+          const solPriceData = await fetchSolanaPrice();
+          const signature = await withdraw(withdrawalParams, solPriceData.price);
 
-        toast.success(
-          `Tip sent! ${customAmount} ${tokenInfo.symbol.toUpperCase()}`
-        );
+          // Save tip to database after successful transaction
+          if (streamerId) {
+            try {
+              const tipResult = await createTip({
+                amount: customAmount,
+                tokenType: "USDC", // Assuming USDC for now
+                streamerId: streamerId,
+                streamId: streamId,
+                transactionHash: signature,
+              });
+
+              // Broadcast tip notification to all viewers
+              if (tipResult.success && tipResult.data) {
+                await broadcastTip(tipResult.data);
+              }
+            } catch (dbError) {
+              console.error("Failed to save tip to database:", dbError);
+              // Don't fail the entire transaction if DB save fails
+              // The blockchain transaction was successful
+            }
+          }
+
+          toast.success(`Tip sent! $${customAmount}`);
+        } catch (error: any) {
+          console.error("Tip error:", error?.message);
+          toast.error(`Failed to send tip: ${error.message}`);
+        }
+
         onSendTip?.(customAmount);
-        onClose?.();
+        // onClose?.();
       } catch (error: any) {
-        console.error("Tip error:", error);
+        console.error("Tip error:", error?.message);
         toast.error(`Failed to send tip: ${error.message}`);
       }
     });
@@ -165,124 +183,26 @@ export const TipComponent = ({
     return `${price}`;
   };
 
-  const handleSendGift = () => {
-    if (!selectedGift) return;
-
-    const gift = allGifts.find((g) => g.id === selectedGift);
-    if (!gift) return;
-
-    // For now, just show a toast - you can implement the actual gift sending logic
-    toast.success(`Sent ${gift.name} gift!`);
-    onClose?.();
-  };
-
-  // Calculate streamer's platform wallet ATA address
+  // TODO: Move this section to a hook and use useQuery - Calculate streamer's platform wallet ATA address
   useEffect(() => {
-    const calculateStreamerAta = async () => {
-      if (!hostWalletAddress) return;
+    async function fetchStreamerAtaAddress() {
+      if (!hostWalletAddress || !wallet) return;
 
-      try {
-        const program = getProgram(connection, wallet as unknown as Wallet);
-
-        const tokenMint = new PublicKey(supportedTokens.contractAddress);
-
-        // Calculate the streamer PDA (platform wallet)
-        const [streamerStatePDA] = PublicKey.findProgramAddressSync(
-          [Buffer.from("user"), new PublicKey(hostWalletAddress).toBuffer()],
-          program.programId
-        );
-
-        // Calculate the streamer's ATA for receiving tips
-        const streamerAta = await getAssociatedTokenAddress(
-          tokenMint,
-          streamerStatePDA,
-          true // allowOwnerOffCurve = true for PDA
-        );
-
-        setStreamerAtaAddress(streamerAta.toString());
-        console.log("Streamer platform wallet ATA:", streamerAta.toString());
-      } catch (error) {
-        console.error("Failed to calculate streamer ATA:", error);
+      const streamerAtaAddress = await fetchStreamerAta(
+        hostWalletAddress,
+        wallet
+      );
+      if (streamerAtaAddress) {
+        setStreamerAtaAddress(streamerAtaAddress);
       }
-    };
+    }
 
-    calculateStreamerAta();
-  }, [hostWalletAddress]);
-
-  // Fetch balance on component mount and token change
-  useEffect(() => {
-    if (!address || !wallet) return;
-    console.log(address);
-    console.log(hostWalletAddress);
-    console.log(hostIdentity);
-
-    const fetchBalance = async () => {
-      setIsLoading(true);
-      try {
-        const tokenInfo = supportedTokens;
-        if (!tokenInfo) return;
-
-        const tokenMint = new PublicKey(tokenInfo.contractAddress);
-        const ata = await getAssociatedTokenAddress(
-          tokenMint,
-          new PublicKey(address)
-        );
-
-        try {
-          const account = await getAccount(connection, ata);
-          const mintInfo = await getMint(connection, tokenMint);
-          const balance =
-            Number(account.amount) / Math.pow(10, mintInfo.decimals);
-          setBalance(balance);
-        } catch {
-          setBalance(0);
-        }
-      } catch (error) {
-        console.error("Failed to fetch balance:", error);
-        setBalance(0);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchBalance();
-  }, [address, wallet, selectedToken]);
+    fetchStreamerAtaAddress();
+  }, [hostWalletAddress, wallet]);
 
   return (
     <div className=" text-white w-full max-w-sm mx-auto h-full flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-700">
-        <div className="flex space-x-2">
-          <button
-            onClick={() => setMode("qr")}
-            className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
-              mode === "qr"
-                ? "bg-red-600 text-white"
-                : "text-gray-400 hover:text-white hover:bg-gray-700"
-            }`}
-          >
-            Show QR
-          </button>
-          <button
-            onClick={() => setMode("gift")}
-            className={`px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
-              mode === "gift"
-                ? "bg-red-600 text-white"
-                : "text-gray-400 hover:text-white hover:bg-gray-700"
-            }`}
-          >
-            Send Gift
-          </button>
-        </div>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-white transition-colors"
-        >
-          <X size={20} />
-        </button>
-      </div>
-
-      {mode === "qr" ? (
+      {giftMode === GiftMode.TIP ? (
         <>
           {/* Token Selector & Balance */}
           <div className="p-4 space-y-3">
@@ -311,55 +231,15 @@ export const TipComponent = ({
           {/* QR Area */}
           <div className="flex-1 mb-o p-4 space-y-6 border-gray-700">
             {/* Platform Wallet QR Code */}
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <div className="text-sm text-gray-400 text-center">
-                Tip host from an external wallet?
-              </div>
-
-              {streamerAtaAddress ? (
-                <>
-                  <div className="bg-white p-4 rounded-lg">
-                    <QRCodeSVG
-                      value={streamerAtaAddress}
-                      size={128}
-                      bgColor="#000000"
-                      fgColor="#ffffff"
-                      level="M"
-                      // includeMargin={true}
-                      // marginSize={2}
-                    />
-                  </div>
-
-                  <div className="text-xs text-gray-400 text-center max-w-full break-all px-2">
-                    {truncateBetween(streamerAtaAddress)}
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(streamerAtaAddress);
-                      toast.success("Address copied to clipboard!");
-                    }}
-                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                  >
-                    Copy Address
-                  </button>
-                  <div className="text-xs bg-[#FE3C3E40] rounded-sm p-1 px-2 text-center">
-                    only send USDC on Solana network to this address
-                  </div>
-                </>
-              ) : (
-                <div className="bg-gray-800 p-4 rounded-lg flex items-center justify-center">
-                  <div className="text-gray-400 text-sm">
-                    Loading wallet address...
-                  </div>
-                </div>
-              )}
-            </div>
+            <FundWallet
+              walletAddress={streamerAtaAddress}
+              title="Tip host from an external wallet?"
+            />
           </div>
 
           {/* Bottom Section */}
           <div className="__bottom_component flex flex-col">
-            <div className="flex-1 mb-o p-4 space-y-6 border-t border-gray-700">
+            <div className="flex-1 mb-o p-0 pt-4 md:p-4 space-y-6 border-t border-border/30">
               {/* Tip Amount Buttons */}
               <div className="flex flex-row overflow-x-scroll gap-2">
                 {tipAmounts.map((amount) => (
@@ -387,15 +267,15 @@ export const TipComponent = ({
                   type="number"
                   value={customAmount}
                   onChange={handleCustomAmountChange}
-                  className="w-full bg-transparent px-3 py-2 text-white focus:outline-none text-center"
+                  className="w-full bg-transparent border border-border/30 rounded-full px-3 py-2 text-white focus:outline-none text-center"
                   min="1"
                   max={balance}
                 />
               </div>
             </div>
-            <div className="flex flex-row p-4 space-y-4 w-full justify-between">
+            <div className="flex flex-row md:p-4 space-y-4 w-full items-center justify-between">
               {/* Send Tip Button */}
-              <div className="__balance_container flex flex-row w-[40%] place-items-center">
+              <div className="__balance_container flex flex-row place-items-center">
                 <div className="__image_container flex place-items-center">
                   <Image
                     src={"/image/pepicons-print_coins.png"}
@@ -413,65 +293,69 @@ export const TipComponent = ({
                   </span>
                 </div>
               </div>
-              <button
+              <Button
                 onClick={handleSendTip}
                 disabled={
                   customAmount <= 0 ||
-                  customAmount > balance ||
+                  customAmount > (balance || 0) ||
                   isPending ||
-                  isLoading ||
                   !address ||
                   !wallet
                 }
-                className="md:w-[100px] bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium py-2 rounded-lg transition-colors"
+                size="sm"
+                className="px-4"
               >
                 {isPending
                   ? "Sending..."
                   : !address || !wallet
                     ? "Connect Wallet"
                     : "Send Tip"}
-              </button>
+              </Button>
             </div>
           </div>
         </>
       ) : (
         <>
           {/* Gift Mode */}
-          <div className="p-4">
+          <div className="w-full md:p-4 mt-4 md:mt-0">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center text-gray-400">
                 <div className="w-4 h-4 bg-yellow-400 rounded-full mr-2"></div>
                 <span className="text-sm">Balance: ${balance}</span>
               </div>
-              <div className="flex bg-gray-800 rounded-full p-1">
-                <button
+              <div className="flex bg-border/30 rounded-full p-1">
+                <Button
                   onClick={() => setSelectedFilter("all")}
+                  variant="ghost"
                   className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${
                     selectedFilter === "all"
                       ? "bg-red-600 text-white"
                       : "text-gray-400 hover:text-white"
                   }`}
+                  size="sm"
                 >
                   All
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => setSelectedFilter("affordable")}
+                  variant="ghost"
                   className={`px-4 py-2 text-sm font-medium rounded-full transition-colors ${
                     selectedFilter === "affordable"
                       ? "bg-red-600 text-white"
                       : "text-gray-400 hover:text-white"
                   }`}
+                  size="sm"
                 >
                   Affordable
-                </button>
+                </Button>
               </div>
             </div>
 
             {/* Scrollable Gift Grid - 2x2 */}
-            <div className=" h-full max-h-96 overflow-y-auto">
-              <div className="grid grid-cols-2 gap-3 p-2">
+            <div className=" h-full max-h-[calc(100dvh-230px)] w-full overflow-y-auto">
+              <div className="w-full grid grid-cols-2 gap-3">
                 {filteredGifts.map((gift) => (
-                  <button
+                  <Button
                     key={gift.id}
                     onClick={() => {
                       handleGiftSelect(gift.id);
@@ -480,7 +364,7 @@ export const TipComponent = ({
                     className={`relative rounded-2xl p-4 flex flex-col items-center justify-center transition-all hover:scale-105 h-32 ${
                       selectedGift === gift.id
                         ? "bg-[#FE3C3E40] border-[#FE3C3E] text-white"
-                        : "bg-transparent border-[#353534] text-gray-300 hover:border-gray-500"
+                        : "bg-secondary text-gray-300 hover:border-gray-500"
                     }`}
                   >
                     {gift.premium && (
@@ -503,13 +387,13 @@ export const TipComponent = ({
                         ${formatPrice(gift.price)}
                       </span>
                     </div>
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
-            <div className="flex flex-row p-4 space-y-4 w-full justify-between">
+            <div className="flex items-center p-0 md:p-4 space-y-4 w-full justify-between">
               {/* Send Tip Button */}
-              <div className="__balance_container flex flex-row w-[40%] place-items-center">
+              <div className="__balance_container flex flex-row place-items-center">
                 <div className="__image_container flex place-items-center">
                   <Image
                     src={"/image/pepicons-print_coins.png"}
@@ -527,24 +411,26 @@ export const TipComponent = ({
                   </span>
                 </div>
               </div>
-              <button
+              <Button
                 onClick={handleSendTip}
                 disabled={
                   customAmount <= 0 ||
-                  customAmount > balance ||
+                  customAmount > (balance || 0) ||
                   isPending ||
                   isLoading ||
                   !address ||
-                  !wallet
+                  !wallet || !selectedGift
                 }
-                className="md:w-[100px] bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium py-2 rounded-lg transition-colors"
+                size="sm"
+                className="px-4"
+                // className="md:w-[100px] bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium py-2 rounded-lg transition-colors"
               >
                 {selectedGift && isPending
                   ? "Sending..."
                   : !address || !wallet
                     ? "Connect Wallet"
                     : "Send Gift"}
-              </button>
+              </Button>
             </div>
           </div>
         </>

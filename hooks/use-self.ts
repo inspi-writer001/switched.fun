@@ -6,6 +6,9 @@ interface User {
   imageUrl: string;
   externalUserId: string;
   bio: string | null;
+  solanaWallet: string | null;
+  platformWallet: string | null;
+  isSolanaPlatformWallet: boolean;
   interests: Array<{
     id: string;
     subCategory: {

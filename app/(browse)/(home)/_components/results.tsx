@@ -49,7 +49,7 @@ export const Results = () => {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold mb-4 font-sans">
+      <h2 className="text-sm md:text-lg font-semibold mb-4 font-sans">
         Streams we think you&apos;ll like
       </h2>
       
@@ -60,7 +60,7 @@ export const Results = () => {
       )}
 
       {allStreams.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
           {allStreams.map((stream, index) => {
             // Add ref to last element for intersection observer
             if (allStreams.length === index + 1) {

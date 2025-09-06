@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUser } from "@civic/auth-web3/nextjs";
 import { db } from "@/lib/db";
-import { getCachedData } from "@/lib/redis";
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,121 +25,115 @@ export async function GET(request: NextRequest) {
       console.log("User not authenticated, showing public search results");
     }
 
-    // Get search results with caching
-    const cacheKey = userId ? `search:authenticated:${userId}:${term.toLowerCase()}` : `search:public:${term.toLowerCase()}`;
+    // Get search results directly from database
+    let users;
     
-    const users = await getCachedData({
-      key: cacheKey,
-      ttl: 60, // 1 minute cache for search results
-      fetchFn: async () => {
-        if (userId) {
-          // Authenticated user: filter out blocked users
-          return db.user.findMany({
-            where: {
-              NOT: {
-                blocking: {
-                  some: {
-                    blockedId: userId,
-                  },
-                },
+    if (userId) {
+      // Authenticated user: filter out blocked users
+      users = await db.user.findMany({
+        where: {
+          NOT: {
+            blocking: {
+              some: {
+                blockedId: userId,
               },
-              OR: [
-                {
-                  username: {
-                    contains: term,
-                    mode: "insensitive",
-                  },
-                },
-                {
-                  bio: {
-                    contains: term,
-                    mode: "insensitive",
-                  },
-                },
-              ],
             },
+          },
+          OR: [
+            {
+              username: {
+                contains: term,
+                mode: "insensitive",
+              },
+            },
+            {
+              bio: {
+                contains: term,
+                mode: "insensitive",
+              },
+            },
+          ],
+        },
+        select: {
+          id: true,
+          username: true,
+          bio: true,
+          imageUrl: true,
+          stream: {
             select: {
               id: true,
-              username: true,
-              bio: true,
-              imageUrl: true,
-              stream: {
-                select: {
-                  id: true,
-                  isLive: true,
-                  name: true,
-                  thumbnailUrl: true,
-                },
-              },
-              _count: {
-                select: {
-                  followedBy: true,
-                },
+              isLive: true,
+              name: true,
+              thumbnailUrl: true,
+            },
+          },
+          _count: {
+            select: {
+              followedBy: true,
+            },
+          },
+        },
+        orderBy: [
+          {
+            stream: {
+              isLive: "desc",
+            },
+          },
+          {
+            createdAt: "desc",
+          },
+        ],
+      });
+    } else {
+      // Public user: show all results
+      users = await db.user.findMany({
+        where: {
+          OR: [
+            {
+              username: {
+                contains: term,
+                mode: "insensitive",
               },
             },
-            orderBy: [
-              {
-                stream: {
-                  isLive: "desc",
-                },
+            {
+              bio: {
+                contains: term,
+                mode: "insensitive",
               },
-              {
-                createdAt: "desc",
-              },
-            ],
-          });
-        } else {
-          // Public user: show all results
-          return db.user.findMany({
-            where: {
-              OR: [
-                {
-                  username: {
-                    contains: term,
-                    mode: "insensitive",
-                  },
-                },
-                {
-                  bio: {
-                    contains: term,
-                    mode: "insensitive",
-                  },
-                },
-              ],
             },
+          ],
+        },
+        select: {
+          id: true,
+          username: true,
+          bio: true,
+          imageUrl: true,
+          stream: {
             select: {
               id: true,
-              username: true,
-              bio: true,
-              imageUrl: true,
-              stream: {
-                select: {
-                  id: true,
-                  isLive: true,
-                  name: true,
-                  thumbnailUrl: true,
-                },
-              },
-              _count: {
-                select: {
-                  followedBy: true,
-                },
-              },
+              isLive: true,
+              name: true,
+              thumbnailUrl: true,
             },
-            orderBy: [
-              {
-                stream: {
-                  isLive: "desc",
-                },
-              },
-              {
-                createdAt: "desc",
-              },
-            ],
-          });
-        }
-      },
-    });
+          },
+          _count: {
+            select: {
+              followedBy: true,
+            },
+          },
+        },
+        orderBy: [
+          {
+            stream: {
+              isLive: "desc",
+            },
+          },
+          {
+            createdAt: "desc",
+          },
+        ],
+      });
+    }
 
     return NextResponse.json(users);
   } catch (err: any) {

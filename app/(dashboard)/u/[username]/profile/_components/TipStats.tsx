@@ -3,75 +3,18 @@
 import React, { useMemo, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { DollarSign } from "lucide-react";
-import { useTokenBalances } from "./useTokenBalances";
-import { usePrices } from "./usePrices";
+import { formatBalance } from "@/utils/string";
+import { useBalance, useCurrentUserAta } from "@/hooks/use-balance";
 
 export default function TipStats() {
-  // 1️⃣ On-chain SOL & SPL balances
-  const {
-    solBalance,
-    splTokens,
-    loading: balLoading,
-    error: balError,
-  } = useTokenBalances();
+  const { data: currentUserAta, isLoading: isLoadingAta } = useCurrentUserAta();
 
-  // 2️⃣ USD prices for SOL, USDT & USDC
-  const { prices, loading: priceLoading, error: priceError } = usePrices();
-
-  // real mint addresses
-  const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-  const USDT_MINT = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB";
-
-  // 3️⃣ Compute USD breakdown & total from on-chain data
-  const { totalUSD, breakdown } = useMemo(() => {
-    let solUSD = 0,
-      usdtUSD = 0,
-      usdcUSD = 0,
-      othersUSD = 0;
-
-    if (!balLoading && !priceLoading && !balError && !priceError) {
-      // SOL → USD
-      if (solBalance != null && prices.sol != null) {
-        solUSD = solBalance * prices.sol;
-      }
-
-      // each SPL token → USD
-      splTokens.forEach(({ mint, amount }) => {
-        if (mint === USDT_MINT) {
-          usdtUSD += amount * (prices.usdt ?? 1);
-        } else if (mint === USDC_MINT) {
-          usdcUSD += amount * (prices.usdc ?? 1);
-        } else {
-          // everything else, price it in SOL
-          othersUSD += amount * (prices.sol ?? 0);
-        }
-      });
-    }
-
-    return {
-      totalUSD: solUSD + usdtUSD + usdcUSD + othersUSD,
-      breakdown: { solUSD, usdtUSD, usdcUSD, othersUSD },
-    };
-  }, [
-    solBalance,
-    splTokens,
-    prices,
-    balLoading,
-    priceLoading,
-    balError,
-    priceError,
-  ]);
-
-  // 5️⃣ Helper to render a value or show Loading…
-  const renderAmt = (value: number) =>
-    balLoading || priceLoading ? (
-      <span className="text-sm text-muted-foreground">Loading…</span>
-    ) : (
-      `$${value.toFixed(2)}`
-    );
+  const { data: balance = 0, isLoading: isLoadingBalance } = useBalance(
+    currentUserAta?.streamerAta
+  );
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden bg-background">
       <div className="bg-transparent py-2 px-4 w-full border-b">
         <span className="text-white text-sm font-medium">
           Total Tips Received (This Month)
@@ -85,42 +28,27 @@ export default function TipStats() {
               <DollarSign className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{renderAmt(totalUSD)}</p>
+              <p className="text-2xl font-bold text-white">
+                {" "}
+                ${formatBalance(balance)}
+              </p>
             </div>
           </div>
 
           {/* Right: breakdown */}
-          <div className="text-right text-xs text-muted-foreground space-y-1">
-            <div>
-              SOL:{" "}
-              <span className="text-foreground font-medium">
-                {renderAmt(breakdown.solUSD)}
-              </span>
-            </div>
-            <div>
-              USDT:{" "}
-              <span className="text-foreground font-medium">
-                {renderAmt(breakdown.usdtUSD)}
-              </span>
-            </div>
+          <div className="text-right text-xs text-white space-y-1">
             <div>
               USDC:{" "}
-              <span className="text-foreground font-medium">
-                {renderAmt(breakdown.usdcUSD)}
-              </span>
-            </div>
-            <div>
-              Others:{" "}
-              <span className="text-foreground font-medium">
-                {renderAmt(breakdown.othersUSD)}
+              <span className="text-white font-medium">
+                ${formatBalance(balance)}
               </span>
             </div>
           </div>
         </div>
 
         {/* show any errors inline */}
-        {(balError || priceError) && (
-          <p className="mt-2 text-sm text-red-600">{balError || priceError}</p>
+        {(isLoadingAta || isLoadingBalance) && (
+          <p className="mt-2 text-sm text-red-600">Loading…</p>
         )}
       </CardContent>
     </Card>

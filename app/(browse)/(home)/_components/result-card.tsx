@@ -25,7 +25,7 @@ interface ResultCardProps {
 export const ResultCard = memo(({ data }: ResultCardProps) => {
   return (
     <Link href={`/${data.user.username}`} className="block h-full">
-      <div className="h-full w-full space-y-4 group">
+      <div className="h-full w-full space-y-4 group hover-bg-border/30">
         <Thumbnail
           src={data.thumbnailUrl}
           fallback={data.user.imageUrl}

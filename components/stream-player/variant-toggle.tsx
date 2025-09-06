@@ -24,7 +24,7 @@ export const VariantToggle = () => {
     <Hint label={label} side="left" asChild>
       <Button
         onClick={onToggle}
-        variant="primary"
+        variant="outline"
         size="sm"
         className="ml-auto"
       >

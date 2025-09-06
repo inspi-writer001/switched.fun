@@ -10,12 +10,14 @@ import {
 } from "@livekit/components-react";
 
 import { ChatVariant, useChatSidebar } from "@/store/use-chat-sidebar";
+import { useTipBroadcast, TipNotification } from "@/hooks/use-tip-broadcast";
 
 import { ChatForm } from "./chat-form";
 import { ChatList, ChatListSkeleton } from "./chat-list";
 import { ChatHeader, ChatHeaderSkeleton } from "./chat-header";
 import { ChatCommunity } from "./chat-community";
 import { TipComponent } from "./gift-chat";
+import { TipNotifications } from "./tip-notification";
 
 interface ChatProps {
   hostName: string;
@@ -26,6 +28,7 @@ interface ChatProps {
   isChatEnabled: boolean;
   isChatDelayed: boolean;
   isChatFollowersOnly: boolean;
+  streamId: string;
 }
 
 export const Chat = ({
@@ -37,9 +40,12 @@ export const Chat = ({
   isChatEnabled,
   isChatDelayed,
   isChatFollowersOnly,
+  streamId,
 }: ChatProps) => {
   const matches = useMediaQuery("(max-width: 1024px)");
-  const { variant, onExpand, onChangeVariant } = useChatSidebar((state) => state);
+  const { variant, onExpand, onChangeVariant } = useChatSidebar(
+    (state) => state
+  );
   const connectionState = useConnectionState();
   const participant = useRemoteParticipant(hostIdentity);
 
@@ -50,7 +56,14 @@ export const Chat = ({
   const [reactions, setReactions] = useState<
     { id: number; emoji: string; x: number }[]
   >([]);
+  const [tipNotifications, setTipNotifications] = useState<TipNotification[]>([]);
   const { chatMessages: messages, send } = useChat();
+
+  const handleTipNotification = (notification: TipNotification) => {
+    setTipNotifications(prev => [notification, ...prev.slice(0, 4)]); // Keep only 5 most recent
+  };
+
+  const { broadcastTip } = useTipBroadcast(null, handleTipNotification);
 
   useEffect(() => {
     if (matches) {
@@ -85,7 +98,7 @@ export const Chat = ({
   };
 
   return (
-    <div className="flex flex-col bg-background border-l border-b pt-0 h-[calc(100vh-80px)] relative">
+    <div className="flex flex-col bg-background md:border-l md:border-b pt-0 h-[calc(100vh-380px)] md:h-[calc(100vh-80px)] relative">
       <ChatHeader />
 
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
@@ -105,7 +118,10 @@ export const Chat = ({
 
       {variant === ChatVariant.CHAT && (
         <>
-          <ChatList messages={reversedMessages} isHidden={isHidden} />
+          <div className="flex-1 overflow-y-auto p-2">
+            <TipNotifications notifications={tipNotifications} />
+            <ChatList messages={reversedMessages} isHidden={isHidden} />
+          </div>
           <ChatForm
             onSubmit={onSubmit}
             onReact={handleReact}
@@ -126,12 +142,16 @@ export const Chat = ({
         />
       )}
       {variant === ChatVariant.GIFT && (
-        <TipComponent
-          hostIdentity={hostIdentity}
-          hostWalletAddress={hostWalletAddress}
-          onClose={() => onChangeVariant(ChatVariant.CHAT)}
-          onSendTip={(amount) => console.log(`Sending tip: ${amount}`)}
-        />
+        <div className="hidden md:block">
+          <TipComponent
+            hostIdentity={hostIdentity}
+            hostWalletAddress={hostWalletAddress}
+            streamerId={hostIdentity}
+            streamId={streamId}
+            onClose={() => onChangeVariant(ChatVariant.CHAT)}
+            onSendTip={(amount) => console.log(`Sending tip: ${amount}`)}
+          />
+        </div>
       )}
 
       <style jsx>{`

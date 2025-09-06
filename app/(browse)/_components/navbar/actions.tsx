@@ -1,7 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { Clapperboard, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useUser } from "@civic/auth-web3/react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -21,18 +20,18 @@ export const Actions = () => {
 
   const { data: currentUser, isLoading, isError, refetch } = useSelf();
 
+  console.log("currentUser", currentUser?.solanaWallet);
+
   // Handle modal opening logic
   useEffect(() => {
     if (!isLoading && !isError && currentUser) {
       // First priority: check if user needs to complete profile
       if (!currentUser?.username || !currentUser?.interests?.length) {
-        console.log("User needs to complete profile");
         setOpenUsernameModal(true);
         setOpenPlatformWalletModal(false);
       } 
       // Second priority: check if user needs platform wallet
       else if ((currentUser as any)?.needsPlatformWallet) {
-        console.log("User needs to activate platform wallet");
         setOpenUsernameModal(false);
         setOpenPlatformWalletModal(true);
       }
@@ -98,6 +97,7 @@ export const Actions = () => {
               id: currentUser?.id ?? "",
               username: currentUser?.username ?? "",
               picture: currentUser?.imageUrl ?? "",
+              wallet: currentUser?.solanaWallet ?? "",
             }}
             refetch={refetch}
           />
