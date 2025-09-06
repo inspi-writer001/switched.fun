@@ -7,6 +7,7 @@ import {
   useChat,
   useConnectionState,
   useRemoteParticipant,
+  useRoomContext,
 } from "@livekit/components-react";
 
 import { ChatVariant, useChatSidebar } from "@/store/use-chat-sidebar";
@@ -51,6 +52,9 @@ export const Chat = ({
 
   const isOnline = participant && connectionState === ConnectionState.Connected;
   const isHidden = !isChatEnabled || !isOnline;
+  
+  // Check if the current viewer is the host
+  const isHost = viewerName === hostName;
 
   const [value, setValue] = useState("");
   const [reactions, setReactions] = useState<
@@ -58,12 +62,13 @@ export const Chat = ({
   >([]);
   const [tipNotifications, setTipNotifications] = useState<TipNotification[]>([]);
   const { chatMessages: messages, send } = useChat();
+  const room = useRoomContext();
 
   const handleTipNotification = (notification: TipNotification) => {
     setTipNotifications(prev => [notification, ...prev.slice(0, 4)]); // Keep only 5 most recent
   };
 
-  const { broadcastTip } = useTipBroadcast(null, handleTipNotification);
+  const { broadcastTip } = useTipBroadcast(room, handleTipNotification);
 
   useEffect(() => {
     if (matches) {
@@ -131,6 +136,7 @@ export const Chat = ({
             isFollowersOnly={isChatFollowersOnly}
             isDelayed={isChatDelayed}
             isFollowing={isFollowing}
+            isHost={isHost}
           />
         </>
       )}

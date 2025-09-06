@@ -22,6 +22,7 @@ import { fetchSolanaPrice, fetchSolanaPriceCached } from "@/utils/solana-price";
 import { Button } from "../ui/button";
 import { createTip } from "@/actions/tip";
 import { useTipBroadcast } from "@/hooks/use-tip-broadcast";
+import { useRoomContext } from "@livekit/components-react";
 
 interface TipComponentProps {
   hostIdentity: string;
@@ -65,7 +66,8 @@ export const TipComponent = ({
     currentUserAta?.streamerAta
   );
 
-  const { broadcastTip } = useTipBroadcast(null);
+  const room = useRoomContext();
+  const { broadcastTip } = useTipBroadcast(room);
 
   const tipAmounts = [5, 10, 20, 50, 100, 1000];
 

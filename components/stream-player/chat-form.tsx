@@ -20,6 +20,7 @@ interface ChatFormProps {
   isFollowersOnly: boolean;
   isFollowing: boolean;
   isDelayed: boolean;
+  isHost?: boolean;
 }
 
 export const ChatForm = ({
@@ -31,6 +32,7 @@ export const ChatForm = ({
   isFollowersOnly,
   isFollowing,
   isDelayed,
+  isHost = false,
 }: ChatFormProps) => {
   const [isDelayBlocked, setIsDelayBlocked] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -38,9 +40,9 @@ export const ChatForm = ({
   const emojiButtonRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const isFollowersOnlyAndNotFollowing = isFollowersOnly && !isFollowing;
-  const isDisabled =
-    isHidden || isDelayBlocked || isFollowersOnlyAndNotFollowing;
+  // Hosts can always chat regardless of restrictions
+  const isFollowersOnlyAndNotFollowing = isFollowersOnly && !isFollowing && !isHost;
+  const isDisabled = isHidden || (isDelayBlocked && !isHost) || isFollowersOnlyAndNotFollowing;
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -48,7 +50,7 @@ export const ChatForm = ({
 
     if (!value || isDisabled) return;
 
-    if (isDelayed && !isDelayBlocked) {
+    if (isDelayed && !isDelayBlocked && !isHost) {
       setIsDelayBlocked(true);
       setTimeout(() => {
         setIsDelayBlocked(false);
@@ -106,7 +108,7 @@ export const ChatForm = ({
       className="relative flex flex-row items-center p-3"
     >
       <div className="w-full flex items-center">
-        <ChatInfo isDelayed={isDelayed} isFollowersOnly={isFollowersOnly} />
+        <ChatInfo isDelayed={isDelayed} isFollowersOnly={isFollowersOnly} isHost={isHost} />
         <div className="">
           {/* Input + chat-input emoji picker button */}
           <div className="flex w-full gap-3">

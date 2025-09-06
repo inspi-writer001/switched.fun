@@ -29,6 +29,9 @@ export async function GET(
             isLive: true,
             name: true,
             thumbnailUrl: true,
+            isChatEnabled: true,
+            isChatDelayed: true,
+            isChatFollowersOnly: true,
           },
         },
         interests: {

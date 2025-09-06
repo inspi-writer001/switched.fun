@@ -6,11 +6,13 @@ import { Hint } from "@/components/hint";
 interface ChatInfoProps {
   isDelayed: boolean;
   isFollowersOnly: boolean;
+  isHost?: boolean;
 };
 
 export const ChatInfo = ({
   isDelayed,
-  isFollowersOnly
+  isFollowersOnly,
+  isHost = false,
 }: ChatInfoProps) => {
   const hint = useMemo(() => {
     if (isFollowersOnly && !isDelayed) {
@@ -46,6 +48,11 @@ export const ChatInfo = ({
   }, [isDelayed, isFollowersOnly]);
 
   if (!isDelayed && !isFollowersOnly) {
+    return null;
+  }
+
+  // Don't show restrictions for hosts
+  if (isHost) {
     return null;
   }
 

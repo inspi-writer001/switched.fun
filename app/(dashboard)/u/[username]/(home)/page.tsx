@@ -24,8 +24,14 @@ export default async function CreatorPage({ params }: CreatorPageProps) {
 
   const user = await getUserByUsernameFromApi(username);
 
-  if (user?.externalUserId !== externalUser?.id || !user?.stream) {
+  // Only allow access if the user is accessing their own creator page
+  if (user?.externalUserId !== externalUser?.id) {
     redirect("/");
+  }
+
+  // If user doesn't have a stream, redirect to keys page to set up streaming
+  if (!user?.stream) {
+    redirect(`/u/${username}/keys`);
   }
 
   return (
