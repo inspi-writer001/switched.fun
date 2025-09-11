@@ -47,6 +47,7 @@ export const TipComponent = ({
   // const [isLoading, setIsLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [streamerAtaAddress, setStreamerAtaAddress] = useState<string>("");
+  const [streamerPda, setStreamerPda] = useState<string>("");
   const userContext = useUser();
   const hasWallet = userHasWallet(userContext);
   const userAddress = hasWallet ? userContext.solana.address : "";
@@ -62,9 +63,7 @@ export const TipComponent = ({
   const { wallet, address: solAddress } = useWallet({ type: "solana" });
   const address = solAddress || "";
 
-  const { data: balance, isLoading } = useBalance(
-    currentUserAta?.streamerAta
-  );
+  const { data: balance, isLoading } = useBalance(currentUserAta?.streamerAta);
 
   const room = useRoomContext();
   const { broadcastTip } = useTipBroadcast(room);
@@ -113,16 +112,16 @@ export const TipComponent = ({
           program.programId
         );
 
-        const streamerAta = await getAssociatedTokenAddress(
-          tokenMint,
-          streamerStatePDA,
-          true
-        );
+        // const streamerAta = await getAssociatedTokenAddress(
+        //   tokenMint,
+        //   streamerStatePDA,
+        //   true
+        // );
         let withdrawalParams: any = {
           amount: tipAmount,
-          destinationAddress: streamerAta,
+          destinationAddress: streamerStatePDA.toBase58(),
           walletType: "platform",
-          userAddress: userAddress ?? '',
+          userAddress: userAddress ?? "",
           connection,
         };
 
@@ -130,14 +129,17 @@ export const TipComponent = ({
 
         try {
           const solPriceData = await fetchSolanaPrice();
-          const signature = await withdraw(withdrawalParams, solPriceData.price);
+          const signature = await withdraw(
+            withdrawalParams,
+            solPriceData.price
+          );
 
           // Save tip to database after successful transaction
           if (streamerId) {
             try {
               const tipResult = await createTip({
                 amount: customAmount,
-                tokenType: "USDC", // Assuming USDC for now
+                tokenType: "USDC", // using USDC for now
                 streamerId: streamerId,
                 streamId: streamId,
                 transactionHash: signature,
@@ -190,6 +192,14 @@ export const TipComponent = ({
     async function fetchStreamerAtaAddress() {
       if (!hostWalletAddress || !wallet) return;
 
+      const program = getProgram(connection, wallet as unknown as Wallet);
+      const [streamerStatePDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from("user"), new PublicKey(hostWalletAddress).toBuffer()],
+        program.programId
+      );
+
+      setStreamerPda(streamerStatePDA.toBase58());
+
       const streamerAtaAddress = await fetchStreamerAta(
         hostWalletAddress,
         wallet
@@ -234,7 +244,7 @@ export const TipComponent = ({
           <div className="flex-1 mb-o p-4 space-y-6 border-gray-700">
             {/* Platform Wallet QR Code */}
             <FundWallet
-              walletAddress={streamerAtaAddress}
+              walletAddress={streamerPda}
               title="Tip host from an external wallet?"
             />
           </div>
@@ -421,7 +431,8 @@ export const TipComponent = ({
                   isPending ||
                   isLoading ||
                   !address ||
-                  !wallet || !selectedGift
+                  !wallet ||
+                  !selectedGift
                 }
                 size="sm"
                 className="px-4"

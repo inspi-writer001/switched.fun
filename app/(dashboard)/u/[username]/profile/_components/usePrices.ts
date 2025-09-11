@@ -1,6 +1,7 @@
 // hooks/usePrices.ts
 "use client";
 
+import { fetchSolanaPrice } from "@/utils/solana-price";
 import { useState, useEffect } from "react";
 
 interface Prices {
@@ -23,8 +24,9 @@ export function usePrices() {
           "https://api.coingecko.com/api/v3/simple/price?ids=solana,tether,usd-coin&vs_currencies=usd"
         );
         const data = await res.json();
+        const solPriceData = await fetchSolanaPrice();
         setPrices({
-          sol: data["solana"]?.usd,
+          sol: solPriceData.price,
           usdt: data["tether"]?.usd,
           usdc: data["usd-coin"]?.usd,
         });

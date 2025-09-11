@@ -30,7 +30,7 @@ interface ProfileDropdownProps {
     id: string;
     username: string;
     picture: string;
-    wallet: string | undefined
+    wallet: string | undefined;
   };
   refetch: () => void;
 }
@@ -44,7 +44,9 @@ export const ProfileDropdown = ({
 
   const { data: currentUserAta, isLoading: isLoadingAta } = useCurrentUserAta();
 
-  const { data: balance = 0, isLoading: isLoadingBalance } = useBalance(currentUserAta?.streamerAta);
+  const { data: balance = 0, isLoading: isLoadingBalance } = useBalance(
+    currentUserAta?.streamerAta
+  );
 
   const handleLogout = async () => {
     await signOut();
@@ -71,7 +73,7 @@ export const ProfileDropdown = ({
             <p className="text-sm text-gray-300 capitalize text-center">
               Total Balance
             </p>
-            
+
             {isLoadingBalance ? (
               <Skeleton className=" w-10 h-10" />
             ) : (
@@ -84,19 +86,27 @@ export const ProfileDropdown = ({
                 <Skeleton className=" w-10 h-10" />
               ) : (
                 <>
-                  <p className="text-md text-gray-300">{truncateWalletAddress(currentUserAta?.streamerAta ?? "")}</p>
-                  <Copy 
-                    className="w-4 h-4 text-gray-300 cursor-pointer" 
+                  <p className="text-md text-gray-300">
+                    {truncateWalletAddress(
+                      currentUserAta?.streamerStatePDA ?? ""
+                    )}
+                  </p>
+                  <Copy
+                    className="w-4 h-4 text-gray-300 cursor-pointer"
                     onClick={() => {
-                      navigator.clipboard.writeText(currentUserAta?.streamerAta ?? "");
+                      navigator.clipboard.writeText(
+                        currentUserAta?.streamerStatePDA ?? ""
+                      );
                       toast.success("Address copied to clipboard");
-                    }} 
+                    }}
                   />
                 </>
               )}
             </span>
 
-            <Button onClick={() => setOpenFundWalletModal(true)}>Fund Wallet</Button>
+            <Button onClick={() => setOpenFundWalletModal(true)}>
+              Fund Wallet
+            </Button>
           </div>
           <DropdownMenuSeparator className="bg-border" />
 
@@ -104,7 +114,9 @@ export const ProfileDropdown = ({
             <DropdownMenuItem className="cursor-pointer flex justify-between p-3 bg-transparent hover:bg-transparent">
               <div className="flex items-center gap-x-2">
                 <Podcast className="w-4 h-4" />
-                <p className="text-sm text-gray-300 capitalize">Stream studio</p>
+                <p className="text-sm text-gray-300 capitalize">
+                  Stream studio
+                </p>
               </div>
 
               <ChevronRight className="w-4 h-4" />
@@ -133,8 +145,12 @@ export const ProfileDropdown = ({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    
-      <FundWalletModal open={openFundWalletModal} setOpen={setOpenFundWalletModal} walletAddress={currentUserAta?.streamerAta ?? ""} />
+
+      <FundWalletModal
+        open={openFundWalletModal}
+        setOpen={setOpenFundWalletModal}
+        walletAddress={currentUserAta?.streamerStatePDA ?? ""}
+      />
     </>
   );
 };
