@@ -40,9 +40,8 @@ export async function broadcastTipNotification(
       0 // DataPacket_Kind.RELIABLE
     );
 
-    console.log("Tip notification broadcasted:", tipData);
   } catch (error) {
-    console.error("Failed to broadcast tip notification:", error);
+    // console.error("Failed to broadcast tip notification:", error);
     throw error;
   }
 }

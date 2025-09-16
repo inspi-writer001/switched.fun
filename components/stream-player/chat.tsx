@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ConnectionState } from "livekit-client";
 import { useMediaQuery } from "usehooks-ts";
 import {
@@ -64,9 +64,9 @@ export const Chat = ({
   const { chatMessages: messages, send } = useChat();
   const room = useRoomContext();
 
-  const handleTipNotification = (notification: TipNotification) => {
+  const handleTipNotification = useCallback((notification: TipNotification) => {
     setTipNotifications(prev => [notification, ...prev.slice(0, 4)]); // Keep only 5 most recent
-  };
+  }, []);
 
   const { broadcastTip } = useTipBroadcast(room, handleTipNotification);
 

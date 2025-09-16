@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useDataChannel } from "@livekit/components-react";
 import { Room } from "livekit-client";
 import { broadcastTipNotification, createTipBroadcastData, isTipNotification, formatTipMessage } from "@/lib/tip-broadcast";
@@ -16,8 +16,8 @@ export interface TipNotification {
   streamerUsername: string;
   timestamp: number;
   message: string;
-  isLargeTip?: boolean; // New field to indicate if this is a large tip
-  isMegaTip?: boolean; // New field to indicate if this is a mega tip
+  isLargeTip?: boolean;
+  isMegaTip?: boolean;
 }
 
 /**
@@ -28,6 +28,20 @@ export function useTipBroadcast(
   onTipReceived?: (notification: TipNotification) => void
 ) {
   const { message } = useDataChannel();
+  
+  // Keep track of processed message IDs to prevent duplicates
+  const processedMessageIds = useRef(new Set<string>());
+  
+  // Clear old message IDs periodically to prevent memory leaks
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (processedMessageIds.current.size > 1000) {
+        processedMessageIds.current.clear();
+      }
+    }, 300000); // Clear every 5 minutes
+    
+    return () => clearInterval(interval);
+  }, []);
 
   // Broadcast a tip notification
   const broadcastTip = useCallback(async (tipData: any) => {
@@ -37,15 +51,22 @@ export function useTipBroadcast(
     }
 
     try {
+      // Validate tip data before broadcasting
+      if (!tipData || !tipData.id || !tipData.amount || !tipData.tipper || !tipData.streamer) {
+        console.error("Invalid tip data for broadcasting:", tipData);
+        return;
+      }
+
       const broadcastData = createTipBroadcastData(tipData);
       await broadcastTipNotification(room, broadcastData);
       console.log("Tip broadcasted successfully");
     } catch (error) {
       console.error("Failed to broadcast tip:", error);
+      // Don't throw the error to prevent breaking the app
     }
   }, [room]);
 
-  // Handle incoming tip notifications
+  // Handle incoming tip notifications with deduplication
   useEffect(() => {
     if (!message) return;
 
@@ -54,6 +75,23 @@ export function useTipBroadcast(
       
       if (isTipNotification(data)) {
         const tip = data.tip;
+        
+        // Validate tip data before processing
+        if (!tip || !tip.id || !tip.amount || !tip.tipperUsername || !tip.streamerUsername) {
+          console.error("Invalid tip notification data:", tip);
+          return;
+        }
+
+        // Check if we've already processed this message
+        const messageId = `${tip.id}-${tip.timestamp}`;
+        if (processedMessageIds.current.has(messageId)) {
+          console.log("Duplicate tip notification ignored:", messageId);
+          return;
+        }
+        
+        // Mark this message as processed
+        processedMessageIds.current.add(messageId);
+
         const isLargeTip = tip.amount >= TIP_CONFIG.LARGE_TIP_THRESHOLD;
         const isMegaTip = tip.amount >= TIP_CONFIG.MEGA_TIP_THRESHOLD;
         
@@ -64,7 +102,7 @@ export function useTipBroadcast(
           giftType: tip.giftType,
           giftName: tip.giftName,
           tipperUsername: tip.tipperUsername,
-          tipperImageUrl: tip.tipperImageUrl,
+          tipperImageUrl: tip.tipperImageUrl || "",
           streamerUsername: tip.streamerUsername,
           timestamp: tip.timestamp,
           message: formatTipMessage(tip),
@@ -73,43 +111,59 @@ export function useTipBroadcast(
         };
 
         // Show different notifications based on tip size
-        if (isMegaTip) {
-          // Mega tips get the most prominent toast
-          toast.success(`🚀 MEGA TIP! ${notification.message}`, {
-            duration: TIP_CONFIG.MEGA_TOAST_DURATION,
-            description: `${tip.giftType ? `Gift: ${tip.giftName}` : `Amount: $${tip.amount} ${tip.tokenType}`}`,
-            className: "bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-400/50",
-          });
-        } else if (isLargeTip) {
-          // Large tips get a prominent toast
-          toast.success(`🌟 BIG TIP! ${notification.message}`, {
-            duration: TIP_CONFIG.LARGE_TOAST_DURATION,
-            description: `${tip.giftType ? `Gift: ${tip.giftName}` : `Amount: $${tip.amount} ${tip.tokenType}`}`,
-            className: "bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-400/50",
-          });
-        } else {
-          // Regular tips get standard toast
-          toast.success(notification.message, {
-            duration: TIP_CONFIG.REGULAR_TOAST_DURATION,
-            description: `${tip.giftType ? `Gift: ${tip.giftName}` : `Amount: $${tip.amount} ${tip.tokenType}`}`,
-          });
+        try {
+          if (isMegaTip) {
+            // Mega tips get the most prominent toast
+            toast.success(`🚀 MEGA TIP! ${notification.message}`, {
+              duration: TIP_CONFIG.MEGA_TOAST_DURATION,
+              description: `${tip.giftType ? `Gift: ${tip.giftName}` : `Amount: $${tip.amount} ${tip.tokenType}`}`,
+              className: "bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-400/50",
+            });
+          } else if (isLargeTip) {
+            // Large tips get a prominent toast
+            toast.success(`🌟 BIG TIP! ${notification.message}`, {
+              duration: TIP_CONFIG.LARGE_TOAST_DURATION,
+              description: `${tip.giftType ? `Gift: ${tip.giftName}` : `Amount: $${tip.amount} ${tip.tokenType}`}`,
+              className: "bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-400/50",
+            });
+          } else {
+            // Regular tips get standard toast
+            toast.success(notification.message, {
+              duration: TIP_CONFIG.REGULAR_TOAST_DURATION,
+              description: `${tip.giftType ? `Gift: ${tip.giftName}` : `Amount: $${tip.amount} ${tip.tokenType}`}`,
+            });
+          }
+        } catch (toastError) {
+          console.error("Failed to show toast notification:", toastError);
+          // Fallback to console log if toast fails
+          console.log("Tip notification:", notification.message);
         }
 
         // Call the callback if provided
-        if (onTipReceived) {
-          onTipReceived(notification);
+        try {
+          if (onTipReceived) {
+            onTipReceived(notification);
+          }
+        } catch (callbackError) {
+          console.error("Error in tip received callback:", callbackError);
         }
 
-        console.log("Tip notification received:", notification);
+        console.log("Tip notification processed:", notification);
       }
     } catch (error) {
       console.error("Failed to parse tip notification:", error);
     }
-  }, [message, onTipReceived]);
+  }, [message]); // Remove onTipReceived from dependencies to prevent re-runs
+
+  // Stable callback ref for onTipReceived to prevent effect re-runs
+  const onTipReceivedRef = useRef(onTipReceived);
+  useEffect(() => {
+    onTipReceivedRef.current = onTipReceived;
+  });
 
   return {
     broadcastTip,
-    LARGE_TIP_THRESHOLD: TIP_CONFIG.LARGE_TIP_THRESHOLD, // Export threshold for use in components
-    MEGA_TIP_THRESHOLD: TIP_CONFIG.MEGA_TIP_THRESHOLD, // Export mega threshold
+    LARGE_TIP_THRESHOLD: TIP_CONFIG.LARGE_TIP_THRESHOLD,
+    MEGA_TIP_THRESHOLD: TIP_CONFIG.MEGA_TIP_THRESHOLD,
   };
 }

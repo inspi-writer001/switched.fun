@@ -147,7 +147,12 @@ export const TipComponent = ({
 
               // Broadcast tip notification to all viewers
               if (tipResult.success && tipResult.data) {
-                await broadcastTip(tipResult.data);
+                try {
+                  await broadcastTip(tipResult.data);
+                } catch (broadcastError) {
+                  console.error("Failed to broadcast tip notification:", broadcastError);
+                  // Don't fail the entire operation if broadcast fails
+                }
               }
             } catch (dbError) {
               console.error("Failed to save tip to database:", dbError);

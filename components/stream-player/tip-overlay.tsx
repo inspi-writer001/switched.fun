@@ -15,28 +15,40 @@ export function TipOverlay({ notification, onComplete }: TipOverlayProps) {
   const [animationPhase, setAnimationPhase] = useState<'enter' | 'display' | 'exit'>('enter');
 
   useEffect(() => {
-    // Enter animation
-    const enterTimer = setTimeout(() => {
-      setAnimationPhase('display');
-    }, TIP_CONFIG.OVERLAY_ANIMATION_DURATION);
+    try {
+      // Validate notification data
+      if (!notification || !notification.id || !notification.amount) {
+        console.error("Invalid notification in TipOverlay:", notification);
+        setIsVisible(false);
+        return;
+      }
 
-    // Display duration
-    const displayTimer = setTimeout(() => {
-      setAnimationPhase('exit');
-    }, TIP_CONFIG.OVERLAY_DISPLAY_DURATION);
+      // Enter animation
+      const enterTimer = setTimeout(() => {
+        setAnimationPhase('display');
+      }, TIP_CONFIG.OVERLAY_ANIMATION_DURATION);
 
-    // Exit animation
-    const exitTimer = setTimeout(() => {
+      // Display duration
+      const displayTimer = setTimeout(() => {
+        setAnimationPhase('exit');
+      }, TIP_CONFIG.OVERLAY_DISPLAY_DURATION);
+
+      // Exit animation
+      const exitTimer = setTimeout(() => {
+        setIsVisible(false);
+        onComplete();
+      }, TIP_CONFIG.OVERLAY_DISPLAY_DURATION + TIP_CONFIG.OVERLAY_ANIMATION_DURATION);
+
+      return () => {
+        clearTimeout(enterTimer);
+        clearTimeout(displayTimer);
+        clearTimeout(exitTimer);
+      };
+    } catch (error) {
+      console.error("Error in TipOverlay useEffect:", error);
       setIsVisible(false);
-      onComplete();
-    }, TIP_CONFIG.OVERLAY_DISPLAY_DURATION + TIP_CONFIG.OVERLAY_ANIMATION_DURATION);
-
-    return () => {
-      clearTimeout(enterTimer);
-      clearTimeout(displayTimer);
-      clearTimeout(exitTimer);
-    };
-  }, [onComplete]);
+    }
+  }, [onComplete, notification]);
 
   if (!isVisible) return null;
 
@@ -145,8 +157,16 @@ export function TipOverlayManager({ notifications, onNotificationComplete }: Tip
   const [queue, setQueue] = useState<TipNotification[]>([]);
 
   useEffect(() => {
-    if (notifications.length > 0) {
+    try {
+      if (!notifications || notifications.length === 0) return;
+      
       const latestNotification = notifications[0];
+      
+      // Validate notification data
+      if (!latestNotification || !latestNotification.id || !latestNotification.amount) {
+        console.error("Invalid notification data:", latestNotification);
+        return;
+      }
       
       if (!currentOverlay) {
         // Show the latest notification immediately
@@ -158,22 +178,31 @@ export function TipOverlayManager({ notifications, onNotificationComplete }: Tip
           return exists ? prev : [...prev, latestNotification].slice(0, TIP_CONFIG.MAX_OVERLAY_QUEUE_SIZE);
         });
       }
+    } catch (error) {
+      console.error("Error in TipOverlayManager useEffect:", error);
     }
   }, [notifications, currentOverlay]);
 
   const handleOverlayComplete = () => {
-    if (queue.length > 0) {
-      // Show next notification in queue
-      const nextNotification = queue[0];
-      setQueue(prev => prev.slice(1));
-      setCurrentOverlay(nextNotification);
-    } else {
-      // No more notifications to show
+    try {
+      if (queue.length > 0) {
+        // Show next notification in queue
+        const nextNotification = queue[0];
+        setQueue(prev => prev.slice(1));
+        setCurrentOverlay(nextNotification);
+      } else {
+        // No more notifications to show
+        setCurrentOverlay(null);
+      }
+      
+      if (currentOverlay) {
+        onNotificationComplete(currentOverlay.id);
+      }
+    } catch (error) {
+      console.error("Error in handleOverlayComplete:", error);
+      // Reset state on error
       setCurrentOverlay(null);
-    }
-    
-    if (currentOverlay) {
-      onNotificationComplete(currentOverlay.id);
+      setQueue([]);
     }
   };
 
