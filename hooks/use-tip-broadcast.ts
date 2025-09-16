@@ -110,35 +110,6 @@ export function useTipBroadcast(
           isMegaTip,
         };
 
-        // Show different notifications based on tip size
-        try {
-          if (isMegaTip) {
-            // Mega tips get the most prominent toast
-            toast.success(`🚀 MEGA TIP! ${notification.message}`, {
-              duration: TIP_CONFIG.MEGA_TOAST_DURATION,
-              description: `${tip.giftType ? `Gift: ${tip.giftName}` : `Amount: $${tip.amount} ${tip.tokenType}`}`,
-              className: "bg-gradient-to-r from-purple-500/20 to-pink-500/20 border-purple-400/50",
-            });
-          } else if (isLargeTip) {
-            // Large tips get a prominent toast
-            toast.success(`🌟 BIG TIP! ${notification.message}`, {
-              duration: TIP_CONFIG.LARGE_TOAST_DURATION,
-              description: `${tip.giftType ? `Gift: ${tip.giftName}` : `Amount: $${tip.amount} ${tip.tokenType}`}`,
-              className: "bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-400/50",
-            });
-          } else {
-            // Regular tips get standard toast
-            toast.success(notification.message, {
-              duration: TIP_CONFIG.REGULAR_TOAST_DURATION,
-              description: `${tip.giftType ? `Gift: ${tip.giftName}` : `Amount: $${tip.amount} ${tip.tokenType}`}`,
-            });
-          }
-        } catch (toastError) {
-          console.error("Failed to show toast notification:", toastError);
-          // Fallback to console log if toast fails
-          console.log("Tip notification:", notification.message);
-        }
-
         // Call the callback if provided
         try {
           if (onTipReceived) {
