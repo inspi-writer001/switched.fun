@@ -1,12 +1,13 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { Participant, Track } from "livekit-client";
+import { Participant, Track, VideoQuality, RemoteTrackPublication } from "livekit-client";
 import { useTracks } from "@livekit/components-react";
 import { useEventListener } from "usehooks-ts";
 
 import { VolumeControl } from "./volume-control";
 import { FullscreenControl } from "./fullscreen-control";
+import { QualityControl } from "./quality-control";
 
 interface LiveVideoProps {
   participant: Participant;
@@ -20,6 +21,11 @@ export const LiveVideo = ({
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [volume, setVolume] = useState(100);
+  const [videoQuality, setVideoQuality] = useState("auto");
+
+  // Get video tracks for this participant (supports both camera and OBS/ingress streams)
+  const videoTracks = useTracks([Track.Source.Camera, Track.Source.Unknown])
+    .filter((track) => track.participant.identity === participant.identity);
 
   const onVolumeChange = (value: number) => {
     setVolume(+value);
@@ -37,6 +43,39 @@ export const LiveVideo = ({
     if (videoRef?.current) {
       videoRef.current.muted = !isMuted;
       videoRef.current.volume = isMuted ? 0.5 : 0;
+    }
+  };
+
+  const onQualityChange = (quality: string) => {
+    setVideoQuality(quality);
+    
+    if (videoTracks.length > 0) {
+      const videoPublication = videoTracks[0].publication as RemoteTrackPublication;
+      
+      // Map quality string to VideoQuality enum
+      let videoQualityEnum: VideoQuality;
+      switch (quality) {
+        case "1080p":
+          videoQualityEnum = VideoQuality.HIGH;
+          break;
+        case "720p":
+          videoQualityEnum = VideoQuality.MEDIUM;
+          break;
+        case "480p":
+        case "360p":
+          videoQualityEnum = VideoQuality.LOW;
+          break;
+        case "auto":
+        default:
+          // For auto, we don't set a specific quality and let LiveKit handle it
+          videoQualityEnum = VideoQuality.HIGH; // Default to high for auto
+          break;
+      }
+      
+      // Set the video quality if not auto
+      if (quality !== "auto") {
+        videoPublication.setVideoQuality(videoQualityEnum);
+      }
     }
   };
   
@@ -80,10 +119,16 @@ export const LiveVideo = ({
             value={volume}
             onToggle={toggleMute}
           />
-          <FullscreenControl
-            isFullscreen={isFullscreen}
-            onToggle={toggleFullscreen}
-          />
+          <div className="flex items-center gap-4">
+            <QualityControl
+              onQualityChange={onQualityChange}
+              currentQuality={videoQuality}
+            />
+            <FullscreenControl
+              isFullscreen={isFullscreen}
+              onToggle={toggleFullscreen}
+            />
+          </div>
         </div>
       </div>
     </div>
