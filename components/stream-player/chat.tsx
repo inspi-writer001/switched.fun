@@ -19,6 +19,8 @@ import { ChatHeader, ChatHeaderSkeleton } from "./chat-header";
 import { ChatCommunity } from "./chat-community";
 import { TipComponent } from "./gift-chat";
 import { TipNotifications } from "./tip-notification";
+import { useUser } from "@civic/auth-web3/react";
+import { cn } from "@/lib/utils";
 
 interface ChatProps {
   hostName: string;
@@ -43,6 +45,7 @@ export const Chat = ({
   isChatFollowersOnly,
   streamId,
 }: ChatProps) => {
+  const { user } = useUser();
   const matches = useMediaQuery("(max-width: 1024px)");
   const { variant, onExpand, onChangeVariant } = useChatSidebar(
     (state) => state
@@ -103,7 +106,7 @@ export const Chat = ({
   };
 
   return (
-    <div className="sticky top-[80px] flex flex-col bg-background md:border-l md:border-b pt-0 h-[calc(100vh-380px)] md:h-[calc(100vh-80px)]">
+    <div className={cn("sticky top-[80px] flex flex-col bg-background md:border-l md:border-b pt-0 h-[calc(100vh-380px)] md:h-[calc(100vh-80px)]", !user && "h-[calc(100vh-460px)] md:h-[calc(100vh-140px)]")}>
       <ChatHeader />
 
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
