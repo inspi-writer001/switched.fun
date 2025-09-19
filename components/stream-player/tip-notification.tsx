@@ -37,11 +37,11 @@ export function TipNotifications({ notifications, maxItems = 3 }: TipNotificatio
   const recentNotifications = notifications.slice(0, maxItems);
 
   if (recentNotifications.length === 0) {
-    return null;
+    return <div className="h-16"></div>;
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 h-16">
       {recentNotifications.map((notification) => (
         <TipNotificationItem
           key={notification.id}

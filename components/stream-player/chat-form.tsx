@@ -77,7 +77,7 @@ export const ChatForm = ({
   }, [showPicker]);
 
   if (isHidden) {
-    return null;
+    return <div className="h-16"></div>;
   }
 
   // Insert emoji at cursor position and focus input
@@ -105,7 +105,7 @@ export const ChatForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="relative flex flex-row items-center p-3"
+      className="relative flex flex-row items-center p-3 h-16"
     >
       <div className="w-full flex items-center">
         <ChatInfo isDelayed={isDelayed} isFollowersOnly={isFollowersOnly} isHost={isHost} />

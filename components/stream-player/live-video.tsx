@@ -41,7 +41,7 @@ export const LiveVideo = ({
   };
   
   useEffect(() => {
-    onVolumeChange(0);
+    onVolumeChange(100);
   }, []);
 
   const toggleFullscreen = () => {

@@ -103,7 +103,7 @@ export const Chat = ({
   };
 
   return (
-    <div className="flex flex-col bg-background md:border-l md:border-b pt-0 h-[calc(100vh-380px)] md:h-[calc(100vh-80px)] relative">
+    <div className="sticky top-[80px] flex flex-col bg-background md:border-l md:border-b pt-0 h-[calc(100vh-380px)] md:h-[calc(100vh-80px)]">
       <ChatHeader />
 
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
@@ -125,7 +125,7 @@ export const Chat = ({
         <>
           <div className="flex-1 overflow-y-auto p-2">
             <TipNotifications notifications={tipNotifications} />
-            <ChatList messages={reversedMessages} isHidden={isHidden} />
+            <ChatList messages={reversedMessages} notifications={tipNotifications} isHidden={isHidden} />
           </div>
           <ChatForm
             onSubmit={onSubmit}
