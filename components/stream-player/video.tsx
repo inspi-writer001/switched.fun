@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback } from "react";
 import { ConnectionState, Track } from "livekit-client";
+import { useAtom } from "jotai";
 import { 
   useConnectionState,
   useRemoteParticipant,
@@ -12,6 +13,11 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { TipOverlayManager } from "./tip-overlay";
 import { useTipBroadcast, TipNotification } from "@/hooks/use-tip-broadcast";
+import { 
+  largeTipNotificationsAtom, 
+  addTipNotificationAtom, 
+  removeTipNotificationAtom 
+} from "@/store/chat-atoms";
 
 import { OfflineVideo } from "./offline-video";
 import { LoadingVideo } from "./loading-video";
@@ -31,7 +37,11 @@ export const Video = ({
   const connectionState = useConnectionState();
   const participant = useRemoteParticipant(hostIdentity);
   const room = useRoomContext();
-  const [largeTipNotifications, setLargeTipNotifications] = useState<TipNotification[]>([]);
+  
+  // Use Jotai atoms for state management
+  const [largeTipNotifications] = useAtom(largeTipNotificationsAtom);
+  const [, addTipNotification] = useAtom(addTipNotificationAtom);
+  const [, removeTipNotification] = useAtom(removeTipNotificationAtom);
   
   const tracks = useTracks([
     Track.Source.Camera,
@@ -39,17 +49,17 @@ export const Video = ({
   ]).filter((track) => track.participant.identity === hostIdentity);
 
   // Handle large tip notifications for overlay
-  const handleLargeTipReceived = (notification: TipNotification) => {
-    if (notification.isLargeTip) {
-      setLargeTipNotifications(prev => [notification, ...prev.slice(0, 2)]); // Keep only 3 most recent
-    }
-  };
+  const handleLargeTipReceived = useCallback((notification: TipNotification) => {
+    // All tip notifications are now handled centrally by the addTipNotification atom
+    // The largeTipNotificationsAtom will automatically filter for large tips
+    addTipNotification(notification);
+  }, [addTipNotification]);
 
   const { broadcastTip } = useTipBroadcast(room, handleLargeTipReceived);
 
-  const handleNotificationComplete = (id: string) => {
-    setLargeTipNotifications(prev => prev.filter(n => n.id !== id));
-  };
+  const handleNotificationComplete = useCallback((id: string) => {
+    removeTipNotification(id);
+  }, [removeTipNotification]);
 
   let content;
 

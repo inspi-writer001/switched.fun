@@ -5,20 +5,17 @@ import { useUser, useWallet } from "@civic/auth-web3/react";
 import { toast } from "sonner";
 import { getProgram } from "@/utils/program";
 import { PublicKey } from "@solana/web3.js";
-import { getAssociatedTokenAddress } from "@solana/spl-token";
 import { Wallet } from "@coral-xyz/anchor";
-import { BN } from "bn.js";
 import Image from "next/image";
 import { allGifts } from "./gift-items";
 import { GiftMode, useChatSidebar } from "@/store/use-chat-sidebar";
 import { connection, supportedTokens } from "@/config/wallet";
-import { fetchStreamerAta, fetchBalance } from "@/utils/wallet";
+import { fetchStreamerAta } from "@/utils/wallet";
 import { FundWallet } from "./fund-wallet";
 import { useBalance, useCurrentUserAta } from "@/hooks/use-balance";
-import { getServerWallet } from "@/lib/server-wallet";
 import { withdraw } from "@/app/(dashboard)/u/[username]/profile/_components/withdrawalService";
 import { userHasWallet } from "@civic/auth-web3";
-import { fetchSolanaPrice, fetchSolanaPriceCached } from "@/utils/solana-price";
+import { fetchSolanaPrice } from "@/utils/solana-price";
 import { Button } from "../ui/button";
 import { createTip } from "@/actions/tip";
 import { useTipBroadcast } from "@/hooks/use-tip-broadcast";
@@ -369,7 +366,7 @@ export const TipComponent = ({
             </div>
 
             {/* Scrollable Gift Grid - 2x2 */}
-            <div className=" h-full max-h-[calc(100dvh-230px)] w-full overflow-y-auto">
+            <div className=" h-full max-h-[calc(100dvh-300px)] w-full overflow-y-auto">
               <div className="w-full grid grid-cols-2 gap-3">
                 {filteredGifts.map((gift) => (
                   <Button
@@ -410,8 +407,8 @@ export const TipComponent = ({
             </div>
             <div className="flex items-center p-0 md:p-4 space-y-4 w-full justify-between">
               {/* Send Tip Button */}
-              <div className="__balance_container flex flex-row place-items-center">
-                <div className="__image_container flex place-items-center">
+              <div className="flex items-center">
+                <div className="flex place-items-center">
                   <Image
                     src={"/image/pepicons-print_coins.png"}
                     alt="coins icon"

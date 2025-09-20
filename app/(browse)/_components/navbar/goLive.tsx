@@ -7,6 +7,7 @@ import {
   CalendarClock,
   ChevronDown,
   ChevronRight,
+  Play,
   Podcast,
   Radio,
 } from "lucide-react";
@@ -118,14 +119,27 @@ function GoLive({ user, size = "default" }: GoLiveProps) {
     <>
       <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger asChild>
-          <Button
-            size={size}
-            aria-label="Go live options"
-            aria-expanded={isDropdownOpen}
-          >
-            Go Live
-            <ChevronDown className="w-4 h-4 ml-2" />
-          </Button>
+          <>
+            <Button
+              size={size}
+              aria-label="Go live options"
+              aria-expanded={isDropdownOpen}
+              className="hidden md:block"
+            >
+              Go Live
+              <ChevronDown className="w-4 h-4 ml-2" />
+            </Button>
+
+            <Button
+              size={size}
+              aria-label="Go live options"
+              aria-expanded={isDropdownOpen}
+              className="md:hidden"
+            >
+              <Play className="w-4 h-4" />
+              <ChevronDown className="w-4 h-4 ml-2" />
+            </Button>
+          </>
         </DropdownMenuTrigger>
         <DropdownMenuContent
           className="min-w-72 bg-background"

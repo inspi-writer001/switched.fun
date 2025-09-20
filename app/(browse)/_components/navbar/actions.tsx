@@ -10,7 +10,7 @@ import { ActivatePlatformWalletModal } from "./activate-platform-wallet-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProfileDropdown } from "./profile-dropdown";
 import { useSelf } from "@/hooks/use-self";
-const log = console.log;
+// const log = console.log;
 
 export const Actions = () => {
   const [loading, setLoading] = useState(false);
@@ -19,8 +19,6 @@ export const Actions = () => {
   const { signIn } = useUser();
 
   const { data: currentUser, isLoading, isError, refetch } = useSelf();
-
-  console.log("currentUser", currentUser?.solanaWallet);
 
   // Handle modal opening logic
   useEffect(() => {

@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { ConnectionState } from "livekit-client";
 import { useMediaQuery } from "usehooks-ts";
+import { useAtom } from "jotai";
 import {
   useChat,
   useConnectionState,
@@ -12,6 +13,15 @@ import {
 
 import { ChatVariant, useChatSidebar } from "@/store/use-chat-sidebar";
 import { useTipBroadcast, TipNotification } from "@/hooks/use-tip-broadcast";
+import {
+  reactionsAtom,
+  tipNotificationsAtom,
+  addReactionAtom,
+  addTipNotificationAtom,
+  chatInputValueAtom,
+  clearOldReactionsAtom,
+  initializeTipNotificationsAtom
+} from "@/store/chat-atoms";
 
 import { ChatForm } from "./chat-form";
 import { ChatList, ChatListSkeleton } from "./chat-list";
@@ -59,17 +69,21 @@ export const Chat = ({
   // Check if the current viewer is the host
   const isHost = viewerName === hostName;
 
-  const [value, setValue] = useState("");
-  const [reactions, setReactions] = useState<
-    { id: number; emoji: string; x: number }[]
-  >([]);
-  const [tipNotifications, setTipNotifications] = useState<TipNotification[]>([]);
+  // Jotai atoms for state management
+  const [value, setValue] = useAtom(chatInputValueAtom);
+  const [reactions] = useAtom(reactionsAtom);
+  const [tipNotifications] = useAtom(tipNotificationsAtom);
+  const [, addReaction] = useAtom(addReactionAtom);
+  const [, addTipNotification] = useAtom(addTipNotificationAtom);
+  const [, clearOldReactions] = useAtom(clearOldReactionsAtom);
+  const [, initializeTipNotifications] = useAtom(initializeTipNotificationsAtom);
+  
   const { chatMessages: messages, send } = useChat();
   const room = useRoomContext();
 
   const handleTipNotification = useCallback((notification: TipNotification) => {
-    setTipNotifications(prev => [notification, ...prev.slice(0, 4)]); // Keep only 5 most recent
-  }, []);
+    addTipNotification(notification);
+  }, [addTipNotification]);
 
   const { broadcastTip } = useTipBroadcast(room, handleTipNotification);
 
@@ -78,6 +92,20 @@ export const Chat = ({
       onExpand();
     }
   }, [matches, onExpand]);
+
+  // Initialize tip notifications from localStorage on mount
+  useEffect(() => {
+    initializeTipNotifications();
+  }, [initializeTipNotifications]);
+
+  // Cleanup old reactions periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      clearOldReactions();
+    }, 5000); // Clean up every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [clearOldReactions]);
 
   const reversedMessages = useMemo(() => {
     return messages.sort((a, b) => b.timestamp - a.timestamp);
@@ -95,14 +123,8 @@ export const Chat = ({
   };
 
   const handleReact = (emoji: string) => {
-    const id = Date.now();
     const x = Math.random() * 80 + 10;
-
-    setReactions([...reactions, { id, emoji, x }]);
-
-    setTimeout(() => {
-      setReactions((prev) => prev.filter((r) => r.id !== id));
-    }, 3000);
+    addReaction({ emoji, x });
   };
 
   return (
