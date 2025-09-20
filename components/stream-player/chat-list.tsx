@@ -30,7 +30,7 @@ export const ChatList = ({
   }
 
   return (
-    <div className={cn("flex flex-1 flex-col-reverse overflow-y-auto p-3 h-[calc(100%-4.5rem)]", notifications?.length > 0 && "h-[calc(100%-6rem)]")}>
+    <div className={cn("flex flex-1 flex-col-reverse overflow-y-auto p-3 h-[calc(100%-6rem)]", notifications?.length > 0 && "h-[calc(100%-6rem)]")}>
       {messages.map((message) => (
         <ChatMessage
           key={message.timestamp}

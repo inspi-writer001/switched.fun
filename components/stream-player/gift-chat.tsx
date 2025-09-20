@@ -96,6 +96,10 @@ export const TipComponent = ({
 
     startTransition(async () => {
       try {
+        // Find selected gift details at the start
+        const selectedGiftData = selectedGift ? allGifts.find(g => g.id === selectedGift) : null;
+        console.log('Sending tip with gift:', { selectedGift, selectedGiftData });
+        
         const program = getProgram(connection, wallet as unknown as Wallet);
 
         const tokenInfo = supportedTokens;
@@ -140,11 +144,17 @@ export const TipComponent = ({
                 streamerId: streamerId,
                 streamId: streamId,
                 transactionHash: signature,
+                // Include gift information if a gift was selected
+                ...(selectedGiftData && {
+                  giftType: selectedGiftData.id,
+                  giftName: selectedGiftData.name,
+                }),
               });
 
               // Broadcast tip notification to all viewers
               if (tipResult.success && tipResult.data) {
                 try {
+                  console.log('Broadcasting tip with data:', tipResult.data);
                   await broadcastTip(tipResult.data);
                 } catch (broadcastError) {
                   console.error("Failed to broadcast tip notification:", broadcastError);
@@ -158,7 +168,10 @@ export const TipComponent = ({
             }
           }
 
-          toast.success(`Tip sent! $${customAmount}`);
+          toast.success(`Tip sent! $${customAmount}${selectedGiftData ? ` with ${selectedGiftData.name}` : ''}`);
+          
+          // Reset selected gift after successful tip
+          setSelectedGift(null);
         } catch (error: any) {
           console.error("Tip error:", error?.message);
           toast.error(`Failed to send tip: ${error.message}`);
@@ -180,6 +193,7 @@ export const TipComponent = ({
 
   const handleGiftSelect = (giftId: string) => {
     setSelectedGift(giftId);
+    console.log('Gift selected:', giftId, allGifts.find(g => g.id === giftId));
   };
 
   const formatPrice = (price: number) => {

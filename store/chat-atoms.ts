@@ -121,12 +121,20 @@ export const largeTipNotificationsAtom = atom<TipNotification[]>((get) => {
 // Derived atom for gift tip notifications (all tips with gifts, excluding large/mega tips)
 export const giftTipNotificationsAtom = atom<TipNotification[]>((get) => {
   const allNotifications = get(tipNotificationsAtom);
-  return allNotifications.filter(notification => 
+  const filtered = allNotifications.filter(notification => 
     notification.giftType && 
     notification.giftName && 
     !notification.isLargeTip && 
     !notification.isMegaTip
   );
+  
+  console.log('Gift tip notifications filtered:', { 
+    all: allNotifications.length, 
+    filtered: filtered.length, 
+    notifications: filtered 
+  });
+  
+  return filtered;
 });
 
 // Derived atom for removing completed tip notifications

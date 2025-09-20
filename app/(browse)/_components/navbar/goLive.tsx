@@ -118,8 +118,8 @@ function GoLive({ user, size = "default" }: GoLiveProps) {
   return (
     <>
       <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-        <DropdownMenuTrigger asChild>
-          <>
+        <div className="hidden md:block">
+          <DropdownMenuTrigger asChild>
             <Button
               size={size}
               aria-label="Go live options"
@@ -129,18 +129,19 @@ function GoLive({ user, size = "default" }: GoLiveProps) {
               Go Live
               <ChevronDown className="w-4 h-4 ml-2" />
             </Button>
-
-            <Button
-              size={size}
-              aria-label="Go live options"
-              aria-expanded={isDropdownOpen}
-              className="md:hidden"
-            >
-              <Play className="w-4 h-4" />
-              <ChevronDown className="w-4 h-4 ml-2" />
-            </Button>
-          </>
-        </DropdownMenuTrigger>
+          </DropdownMenuTrigger>
+        </div>
+        <div className="md:hidden">
+          <Button
+            size={size}
+            aria-label="Go live options"
+            aria-expanded={isDropdownOpen}
+            className="md:hidden"
+          >
+            <Play className="w-4 h-4" />
+            <ChevronDown className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
         <DropdownMenuContent
           className="min-w-72 bg-background"
           align="end"

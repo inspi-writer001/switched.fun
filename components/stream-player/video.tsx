@@ -13,11 +13,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { TipOverlayManager } from "./tip-overlay";
 import { GiftTipOverlayManager } from "./gift-tip-overlay";
-import { useTipBroadcast, TipNotification } from "@/hooks/use-tip-broadcast";
+import { TipNotification } from "@/hooks/use-tip-broadcast";
 import {
   largeTipNotificationsAtom,
   giftTipNotificationsAtom,
-  addTipNotificationAtom,
   removeTipNotificationAtom,
 } from "@/store/chat-atoms";
 
@@ -39,7 +38,6 @@ export const Video = ({ hostName, hostIdentity, thumbnailUrl }: VideoProps) => {
   // Use Jotai atoms for state management
   const [largeTipNotifications] = useAtom(largeTipNotificationsAtom);
   const [giftTipNotifications] = useAtom(giftTipNotificationsAtom);
-  const [, addTipNotification] = useAtom(addTipNotificationAtom);
   const [, removeTipNotification] = useAtom(removeTipNotificationAtom);
 
   const tracks = useTracks([
@@ -47,17 +45,9 @@ export const Video = ({ hostName, hostIdentity, thumbnailUrl }: VideoProps) => {
     Track.Source.Microphone,
   ]).filter((track) => track.participant.identity === hostIdentity);
 
-  // Handle large tip notifications for overlay
-  const handleLargeTipReceived = useCallback(
-    (notification: TipNotification) => {
-      // All tip notifications are now handled centrally by the addTipNotification atom
-      // The largeTipNotificationsAtom will automatically filter for large tips
-      addTipNotification(notification);
-    },
-    [addTipNotification]
-  );
-
-  const { broadcastTip } = useTipBroadcast(room, handleLargeTipReceived);
+  // Note: Tip notifications are handled by the Chat component via useTipBroadcast
+  // The Video component only consumes the notifications from the shared state
+  // This prevents duplicate tip notifications in the chat
 
   const handleNotificationComplete = useCallback(
     (id: string) => {

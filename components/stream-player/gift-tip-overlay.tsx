@@ -266,6 +266,8 @@ export function GiftTipOverlayManager({ notifications, onNotificationComplete }:
 
   useEffect(() => {
     try {
+      console.log('GiftTipOverlayManager received notifications:', notifications);
+      
       if (!notifications || notifications.length === 0) return;
       
       const latestNotification = notifications[0];
@@ -275,6 +277,8 @@ export function GiftTipOverlayManager({ notifications, onNotificationComplete }:
         console.error("Invalid gift notification data:", latestNotification);
         return;
       }
+      
+      console.log('Processing gift tip notification:', latestNotification);
       
       if (!currentOverlay) {
         // Show the latest notification immediately
