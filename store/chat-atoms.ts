@@ -26,13 +26,14 @@ export const tipNotificationsAtom = atom(
     // Persist to localStorage if available
     if (typeof window !== 'undefined') {
       try {
-        // Clean up old notifications before saving
-        const oneHourAgo = Date.now() - (60 * 60 * 1000);
+        // Clean up old notifications before saving (30 seconds for live streaming freshness)
+        const thirtySecondsAgo = Date.now() - (30 * 1000);
         const filtered = newValue.filter(notification => 
-          notification.timestamp > oneHourAgo
+          notification.timestamp > thirtySecondsAgo
         );
-        // Keep only the 10 most recent notifications
-        const limited = filtered.slice(0, 10);
+        // Sort by timestamp and keep only the 3 most recent notifications
+        const sorted = filtered.sort((a: TipNotification, b: TipNotification) => b.timestamp - a.timestamp);
+        const limited = sorted.slice(0, 3);
         localStorage.setItem('switch-fun-tip-notifications', JSON.stringify(limited));
       } catch (error) {
         console.error('Error saving tip notifications to localStorage:', error);
@@ -48,13 +49,14 @@ export const initializeTipNotificationsAtom = atom(null, (get, set) => {
       const item = localStorage.getItem('switch-fun-tip-notifications');
       if (item) {
         const parsed = JSON.parse(item);
-        // Clean up old notifications (older than 1 hour)
-        const oneHourAgo = Date.now() - (60 * 60 * 1000);
+        // Clean up old notifications (older than 30 seconds for live streaming freshness)
+        const thirtySecondsAgo = Date.now() - (30 * 1000);
         const filtered = parsed.filter((notification: TipNotification) => 
-          notification.timestamp > oneHourAgo
+          notification.timestamp > thirtySecondsAgo
         );
-        // Keep only the 10 most recent notifications
-        const limited = filtered.slice(0, 10);
+        // Sort by timestamp (newest first) and keep only the 3 most recent notifications
+        const sorted = filtered.sort((a: TipNotification, b: TipNotification) => b.timestamp - a.timestamp);
+        const limited = sorted.slice(0, 3);
         set(baseTipNotificationsAtom, limited);
       }
     } catch (error) {
@@ -90,8 +92,11 @@ export const addTipNotificationAtom = atom(
   null,
   (get, set, notification: TipNotification) => {
     const currentNotifications = get(tipNotificationsAtom);
-    // Add new notification at the beginning and keep only 5 most recent
-    const updatedNotifications = [notification, ...currentNotifications.slice(0, 4)];
+    // Add new notification and sort by timestamp (newest first)
+    const allNotifications = [notification, ...currentNotifications];
+    const sorted = allNotifications.sort((a: TipNotification, b: TipNotification) => b.timestamp - a.timestamp);
+    // Keep only the 3 most recent notifications
+    const updatedNotifications = sorted.slice(0, 3);
     set(tipNotificationsAtom, updatedNotifications);
   }
 );
@@ -109,6 +114,25 @@ export const clearOldReactionsAtom = atom(
   }
 );
 
+// Derived atom for clearing old tip notifications (cleanup)
+export const clearOldTipNotificationsAtom = atom(
+  null,
+  (get, set) => {
+    const currentNotifications = get(tipNotificationsAtom);
+    const thirtySecondsAgo = Date.now() - (30 * 1000);
+    const filteredNotifications = currentNotifications.filter(
+      notification => notification.timestamp > thirtySecondsAgo
+    );
+    // Sort and limit to 3 most recent
+    const sorted = filteredNotifications.sort((a: TipNotification, b: TipNotification) => b.timestamp - a.timestamp);
+    const limited = sorted.slice(0, 3);
+    
+    if (limited.length !== currentNotifications.length) {
+      set(tipNotificationsAtom, limited);
+    }
+  }
+);
+
 // Atom for chat input value (no persistence needed)
 export const chatInputValueAtom = atom<string>('');
 
@@ -121,20 +145,12 @@ export const largeTipNotificationsAtom = atom<TipNotification[]>((get) => {
 // Derived atom for gift tip notifications (all tips with gifts, excluding large/mega tips)
 export const giftTipNotificationsAtom = atom<TipNotification[]>((get) => {
   const allNotifications = get(tipNotificationsAtom);
-  const filtered = allNotifications.filter(notification => 
+  return allNotifications.filter(notification => 
     notification.giftType && 
     notification.giftName && 
     !notification.isLargeTip && 
     !notification.isMegaTip
   );
-  
-  console.log('Gift tip notifications filtered:', { 
-    all: allNotifications.length, 
-    filtered: filtered.length, 
-    notifications: filtered 
-  });
-  
-  return filtered;
 });
 
 // Derived atom for removing completed tip notifications

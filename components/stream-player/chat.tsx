@@ -20,6 +20,7 @@ import {
   addTipNotificationAtom,
   chatInputValueAtom,
   clearOldReactionsAtom,
+  clearOldTipNotificationsAtom,
   initializeTipNotificationsAtom
 } from "@/store/chat-atoms";
 
@@ -76,6 +77,7 @@ export const Chat = ({
   const [, addReaction] = useAtom(addReactionAtom);
   const [, addTipNotification] = useAtom(addTipNotificationAtom);
   const [, clearOldReactions] = useAtom(clearOldReactionsAtom);
+  const [, clearOldTipNotifications] = useAtom(clearOldTipNotificationsAtom);
   const [, initializeTipNotifications] = useAtom(initializeTipNotificationsAtom);
   
   const { chatMessages: messages, send } = useChat();
@@ -98,14 +100,15 @@ export const Chat = ({
     initializeTipNotifications();
   }, [initializeTipNotifications]);
 
-  // Cleanup old reactions periodically
+  // Cleanup old reactions and tip notifications periodically
   useEffect(() => {
     const interval = setInterval(() => {
       clearOldReactions();
+      clearOldTipNotifications();
     }, 5000); // Clean up every 5 seconds
 
     return () => clearInterval(interval);
-  }, [clearOldReactions]);
+  }, [clearOldReactions, clearOldTipNotifications]);
 
   const reversedMessages = useMemo(() => {
     return messages.sort((a, b) => b.timestamp - a.timestamp);

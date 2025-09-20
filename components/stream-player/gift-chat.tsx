@@ -98,7 +98,6 @@ export const TipComponent = ({
       try {
         // Find selected gift details at the start
         const selectedGiftData = selectedGift ? allGifts.find(g => g.id === selectedGift) : null;
-        console.log('Sending tip with gift:', { selectedGift, selectedGiftData });
         
         const program = getProgram(connection, wallet as unknown as Wallet);
 
@@ -154,7 +153,6 @@ export const TipComponent = ({
               // Broadcast tip notification to all viewers
               if (tipResult.success && tipResult.data) {
                 try {
-                  console.log('Broadcasting tip with data:', tipResult.data);
                   await broadcastTip(tipResult.data);
                 } catch (broadcastError) {
                   console.error("Failed to broadcast tip notification:", broadcastError);
@@ -193,7 +191,6 @@ export const TipComponent = ({
 
   const handleGiftSelect = (giftId: string) => {
     setSelectedGift(giftId);
-    console.log('Gift selected:', giftId, allGifts.find(g => g.id === giftId));
   };
 
   const formatPrice = (price: number) => {

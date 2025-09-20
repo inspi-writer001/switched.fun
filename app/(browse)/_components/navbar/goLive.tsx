@@ -124,7 +124,7 @@ function GoLive({ user, size = "default" }: GoLiveProps) {
               size={size}
               aria-label="Go live options"
               aria-expanded={isDropdownOpen}
-              className="hidden md:block"
+              className="hidden md:inline-flex"
             >
               Go Live
               <ChevronDown className="w-4 h-4 ml-2" />

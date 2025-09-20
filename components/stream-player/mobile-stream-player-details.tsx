@@ -54,22 +54,22 @@ export const MobileStreamPlayerDetails = ({
         </div>
       </div>
 
-      {option === "about" && (
+      <div className={cn("", option === "about" ? "block" : "hidden")}>
         <MobileAboutCard
           user={user}
           identity={identity}
           isFollowing={isFollowing}
           stream={stream}
         />
-      )}
-      {option === "chat" && (
+      </div>
+      <div className={cn("", option === "chat" ? "block" : "hidden")}>
         <MobileChat
           user={user}
           isFollowing={isFollowing}
           stream={stream}
           viewerName={viewerName}
         />
-      )}
+      </div>
     </div>
   );
 };
